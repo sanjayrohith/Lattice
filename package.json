@@ -1,0 +1,14 @@
+{
+  "name": "lattice",
+  "version": "0.1.0",
+  "description": "A multi-agent desktop orchestration environment built on Electron.",
+  "private": true,
+  "type": "module",
+  "author": "sanjayrohith",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {},
+  "devDependencies": {}
+}
