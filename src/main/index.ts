@@ -3,6 +3,7 @@ import { app, BrowserWindow, session } from 'electron';
 import { hardenedWebPreferences } from '@main/security/windowDefaults';
 import { applyContentSecurityPolicy } from '@main/security/contentSecurityPolicy';
 import { applyNavigationGuards } from '@main/security/navigationGuards';
+import { applyPermissionPolicy } from '@main/security/permissions';
 
 const isDev = !app.isPackaged;
 const rendererDevServerUrl = process.env['ELECTRON_RENDERER_URL'];
@@ -36,6 +37,7 @@ function createMainWindow(): BrowserWindow {
 
 void app.whenReady().then(() => {
   applyContentSecurityPolicy(session.defaultSession);
+  applyPermissionPolicy(session.defaultSession);
 
   createMainWindow();
 
