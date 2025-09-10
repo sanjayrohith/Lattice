@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { app, BrowserWindow, session } from 'electron';
 import { hardenedWebPreferences } from '@main/security/windowDefaults';
 import { applyContentSecurityPolicy } from '@main/security/contentSecurityPolicy';
+import { applyNavigationGuards } from '@main/security/navigationGuards';
 
 const isDev = !app.isPackaged;
 const rendererDevServerUrl = process.env['ELECTRON_RENDERER_URL'];
@@ -20,6 +21,9 @@ function createMainWindow(): BrowserWindow {
   window.once('ready-to-show', () => {
     window.show();
   });
+
+  const allowedOrigins = rendererDevServerUrl ? [new URL(rendererDevServerUrl).origin] : [];
+  applyNavigationGuards(window.webContents, allowedOrigins);
 
   if (isDev && rendererDevServerUrl) {
     void window.loadURL(rendererDevServerUrl);
