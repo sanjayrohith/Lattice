@@ -1,6 +1,7 @@
 import { join } from 'node:path';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, session } from 'electron';
 import { hardenedWebPreferences } from '@main/security/windowDefaults';
+import { applyContentSecurityPolicy } from '@main/security/contentSecurityPolicy';
 
 const isDev = !app.isPackaged;
 const rendererDevServerUrl = process.env['ELECTRON_RENDERER_URL'];
@@ -30,6 +31,8 @@ function createMainWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(() => {
+  applyContentSecurityPolicy(session.defaultSession);
+
   createMainWindow();
 
   app.on('activate', () => {
