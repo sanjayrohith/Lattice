@@ -34,3 +34,6 @@ jobs:
 
       - name: Test
         run: npm run test
+
+      - name: Security audit
+        run: npm run audit:security
