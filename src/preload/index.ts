@@ -1,6 +1,16 @@
-import { contextBridge, ipcRenderer } from 'electron';
-import { ipcContracts, type InvokableChannel, type IpcRequest, type IpcResponse } from '@shared/ipc/contracts';
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import {
+  ipcContracts,
+  type InvokableChannel,
+  type IpcRequest,
+  type IpcResponse,
+} from '@shared/ipc/contracts';
 import type { IpcResult } from '@shared/ipc/contracts';
+import {
+  ipcEventContracts,
+  type IpcEventPayload,
+  type SubscribableChannel,
+} from '@shared/ipc/events';
 
 function isRegisteredChannel(channel: string): channel is InvokableChannel {
   return Object.prototype.hasOwnProperty.call(ipcContracts, channel);
@@ -37,8 +47,38 @@ function invoke<C extends InvokableChannel>(
   return ipcRenderer.invoke(channel, payload) as Promise<IpcResult<IpcResponse<C>>>;
 }
 
+/**
+ * Subscribes `listener` to broadcasts on `channel`, validating each inbound
+ * payload against its schema before delivery and silently dropping
+ * malformed events. Returns an unsubscribe function that removes the
+ * underlying `ipcRenderer` listener — call it on unmount so panel remounts
+ * never accumulate duplicate listeners.
+ */
+function subscribe<C extends SubscribableChannel>(
+  channel: C,
+  listener: (payload: IpcEventPayload<C>) => void,
+): () => void {
+  const schema = ipcEventContracts[channel];
+
+  const wrapped = (_event: IpcRendererEvent, rawPayload: unknown): void => {
+    const parsed = schema.safeParse(rawPayload);
+    if (!parsed.success) {
+      console.error(`[preload] dropped malformed event on channel: ${String(channel)}`);
+      return;
+    }
+    listener(parsed.data as IpcEventPayload<C>);
+  };
+
+  ipcRenderer.on(channel, wrapped);
+
+  return () => {
+    ipcRenderer.removeListener(channel, wrapped);
+  };
+}
+
 const electronAPI = {
   invoke,
+  subscribe,
 };
 
 export type ElectronAPI = typeof electronAPI;
