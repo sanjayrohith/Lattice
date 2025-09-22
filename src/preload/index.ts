@@ -1,6 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { InvokableChannel, IpcRequest, IpcResponse } from '@shared/ipc/contracts';
+import { ipcContracts, type InvokableChannel, type IpcRequest, type IpcResponse } from '@shared/ipc/contracts';
 import type { IpcResult } from '@shared/ipc/contracts';
+
+function isRegisteredChannel(channel: string): channel is InvokableChannel {
+  return Object.prototype.hasOwnProperty.call(ipcContracts, channel);
+}
 
 /**
  * Invokes a registered main-process handler for `channel` with `payload`,
@@ -8,11 +12,28 @@ import type { IpcResult } from '@shared/ipc/contracts';
  * renderer reaches into the main process — the raw `ipcRenderer` object is
  * never exposed, so a compromised renderer cannot register arbitrary
  * listeners or invoke arbitrary channels outside this contract.
+ *
+ * The TypeScript signature already restricts `channel` to a known
+ * `InvokableChannel` at compile time, but a runtime guard is kept here too:
+ * a tampered or dynamically constructed call cannot smuggle an unregistered
+ * channel name past the type system, so it is logged and rejected with a
+ * structured `UNKNOWN_CHANNEL` error before ever reaching `ipcRenderer`.
  */
 function invoke<C extends InvokableChannel>(
   channel: C,
   payload: IpcRequest<C>,
 ): Promise<IpcResult<IpcResponse<C>>> {
+  if (!isRegisteredChannel(channel)) {
+    console.error(`[preload] rejected invoke on unregistered channel: ${String(channel)}`);
+    return Promise.resolve({
+      ok: false,
+      error: {
+        code: 'UNKNOWN_CHANNEL',
+        message: `channel "${String(channel)}" is not registered in the IPC contract`,
+      },
+    });
+  }
+
   return ipcRenderer.invoke(channel, payload) as Promise<IpcResult<IpcResponse<C>>>;
 }
 
