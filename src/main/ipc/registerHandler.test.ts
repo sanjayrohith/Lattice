@@ -68,4 +68,60 @@ describe('registerHandler', () => {
     expect(result.error?.code).toBe('HANDLER_ERROR');
     expect(result.error?.message).toBe('disk read failed');
   });
+
+  it('never leaks a raw stack trace through the failure envelope', async () => {
+    const { ipcMain } = await import('electron');
+    const { registerHandler } = await import('./registerHandler');
+
+    registerHandler(IPC_CHANNELS.APP_INFO, () => {
+      throw new Error('boom');
+    });
+
+    const result = (await (
+      ipcMain as unknown as { __invoke: (c: string, p: unknown) => Promise<unknown> }
+    ).__invoke('app:info', undefined)) as { ok: boolean; error?: Record<string, unknown> };
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toEqual({ code: 'HANDLER_ERROR', message: 'boom' });
+    expect(result.error?.['stack']).toBeUndefined();
+  });
+
+  it('rejects a handler result that violates the response schema as INVALID_RESPONSE', async () => {
+    const { ipcMain } = await import('electron');
+    const { registerHandler } = await import('./registerHandler');
+
+    registerHandler(IPC_CHANNELS.WINDOW_POPOUT, () => ({
+      windowId: 'not-a-number' as unknown as number,
+    }));
+
+    const result = (await (
+      ipcMain as unknown as { __invoke: (c: string, p: unknown) => Promise<unknown> }
+    ).__invoke('window:popout', { panelId: 'conversation' })) as {
+      ok: boolean;
+      error?: { code: string };
+    };
+
+    expect(result.ok).toBe(false);
+    expect(result.error?.code).toBe('INVALID_RESPONSE');
+  });
+
+  it('normalizes a non-Error throw (string, object) without crashing the handler pipeline', async () => {
+    const { ipcMain } = await import('electron');
+    const { registerHandler } = await import('./registerHandler');
+
+    registerHandler(IPC_CHANNELS.LOG_WRITE, () => {
+      throw 'a plain string was thrown';
+    });
+
+    const result = (await (
+      ipcMain as unknown as { __invoke: (c: string, p: unknown) => Promise<unknown> }
+    ).__invoke('log:write', { level: 'info', message: 'hi' })) as {
+      ok: boolean;
+      error?: { code: string; message: string };
+    };
+
+    expect(result.ok).toBe(false);
+    expect(result.error?.code).toBe('HANDLER_ERROR');
+    expect(result.error?.message).toBe('a plain string was thrown');
+  });
 });
