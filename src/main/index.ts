@@ -4,6 +4,8 @@ import { hardenedWebPreferences } from '@main/security/windowDefaults';
 import { applyContentSecurityPolicy } from '@main/security/contentSecurityPolicy';
 import { applyNavigationGuards } from '@main/security/navigationGuards';
 import { applyPermissionPolicy } from '@main/security/permissions';
+import { initializeLogger, log } from '@main/logging/logger';
+import { registerLogHandler } from '@main/logging/registerLogHandler';
 
 const isDev = !app.isPackaged;
 const rendererDevServerUrl = process.env['ELECTRON_RENDERER_URL'];
@@ -35,10 +37,14 @@ function createMainWindow(): BrowserWindow {
   return window;
 }
 
+initializeLogger();
+registerLogHandler();
+
 void app.whenReady().then(() => {
   applyContentSecurityPolicy(session.defaultSession);
   applyPermissionPolicy(session.defaultSession);
 
+  log.info('application ready');
   createMainWindow();
 
   app.on('activate', () => {
