@@ -8,6 +8,7 @@ import { initializeLogger, log } from '@main/logging/logger';
 import { registerLogHandler } from '@main/logging/registerLogHandler';
 import { registerAppInfoHandler } from '@main/ipc/registerAppInfoHandler';
 import { persistWindowBounds, resolveInitialBounds } from '@main/windows/windowState';
+import { enforceSingleInstanceLock } from '@main/app/singleInstance';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -55,16 +56,20 @@ initializeLogger();
 registerLogHandler();
 registerAppInfoHandler();
 
-void app.whenReady().then(() => {
-  applyContentSecurityPolicy(session.defaultSession);
-  applyPermissionPolicy(session.defaultSession);
+const hasSingleInstanceLock = enforceSingleInstanceLock(app, () => BrowserWindow.getAllWindows()[0]);
 
-  log.info('application ready');
-  createMainWindow();
+if (hasSingleInstanceLock) {
+  void app.whenReady().then(() => {
+    applyContentSecurityPolicy(session.defaultSession);
+    applyPermissionPolicy(session.defaultSession);
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createMainWindow();
-    }
+    log.info('application ready');
+    createMainWindow();
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createMainWindow();
+      }
+    });
   });
-});
+}
