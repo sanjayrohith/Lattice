@@ -6,6 +6,7 @@ import { applyNavigationGuards } from '@main/security/navigationGuards';
 import { applyPermissionPolicy } from '@main/security/permissions';
 import { initializeLogger, log } from '@main/logging/logger';
 import { registerLogHandler } from '@main/logging/registerLogHandler';
+import { registerAppInfoHandler } from '@main/ipc/registerAppInfoHandler';
 
 const isDev = !app.isPackaged;
 const rendererDevServerUrl = process.env['ELECTRON_RENDERER_URL'];
@@ -39,6 +40,7 @@ function createMainWindow(): BrowserWindow {
 
 initializeLogger();
 registerLogHandler();
+registerAppInfoHandler();
 
 void app.whenReady().then(() => {
   applyContentSecurityPolicy(session.defaultSession);
