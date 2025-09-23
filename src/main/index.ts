@@ -9,6 +9,7 @@ import { registerLogHandler } from '@main/logging/registerLogHandler';
 import { registerAppInfoHandler } from '@main/ipc/registerAppInfoHandler';
 import { persistWindowBounds, resolveInitialBounds } from '@main/windows/windowState';
 import { enforceSingleInstanceLock } from '@main/app/singleInstance';
+import { registerLifecycleHandlers } from '@main/app/lifecycle';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -66,10 +67,10 @@ if (hasSingleInstanceLock) {
     log.info('application ready');
     createMainWindow();
 
-    app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        createMainWindow();
-      }
-    });
+    registerLifecycleHandlers(
+      app,
+      { createWindow: createMainWindow, getAllWindows: BrowserWindow.getAllWindows },
+      () => log.info('application quitting'),
+    );
   });
 }
