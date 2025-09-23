@@ -10,6 +10,7 @@ import { registerAppInfoHandler } from '@main/ipc/registerAppInfoHandler';
 import { persistWindowBounds, resolveInitialBounds } from '@main/windows/windowState';
 import { enforceSingleInstanceLock } from '@main/app/singleInstance';
 import { registerLifecycleHandlers } from '@main/app/lifecycle';
+import { windowManager } from '@main/windows/WindowManager';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -40,6 +41,7 @@ function createMainWindow(): BrowserWindow {
   });
 
   persistWindowBounds(window, app.getPath('userData'), MAIN_WINDOW_KEY);
+  windowManager.register(window, 'main');
 
   const allowedOrigins = rendererDevServerUrl ? [new URL(rendererDevServerUrl).origin] : [];
   applyNavigationGuards(window.webContents, allowedOrigins);
