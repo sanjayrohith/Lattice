@@ -66,4 +66,28 @@ describe('windowState', () => {
     const { loadWindowBounds } = await import('./windowState');
     expect(loadWindowBounds(userDataPath, 'never-saved')).toBeUndefined();
   });
+
+  it('persistWindowBounds returns a disposer that removes its listeners', async () => {
+    const { persistWindowBounds } = await import('./windowState');
+    const { EventEmitter } = await import('node:events');
+
+    const emitter = new EventEmitter();
+    const mockWindow = Object.assign(emitter, {
+      isDestroyed: () => false,
+      isMaximized: () => false,
+      getBounds: () => ({ x: 0, y: 0, width: 800, height: 600 }),
+      getNormalBounds: () => ({ x: 0, y: 0, width: 800, height: 600 }),
+    });
+
+    const dispose = persistWindowBounds(mockWindow as never, userDataPath, 'main');
+    expect(emitter.listenerCount('move')).toBeGreaterThan(0);
+    expect(emitter.listenerCount('resize')).toBeGreaterThan(0);
+    expect(emitter.listenerCount('close')).toBeGreaterThan(0);
+
+    dispose();
+
+    expect(emitter.listenerCount('move')).toBe(0);
+    expect(emitter.listenerCount('resize')).toBe(0);
+    expect(emitter.listenerCount('close')).toBe(0);
+  });
 });

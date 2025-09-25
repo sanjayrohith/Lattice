@@ -64,6 +64,56 @@ describe('WindowManager', () => {
     expect(b.webContents.send).toHaveBeenCalledWith('state:revision', { revision: 1 });
   });
 
+  it('runs every registered disposer when the window closes', () => {
+    const manager = new WindowManager();
+    const window = createMockWindow();
+    manager.register(window, 'main');
+
+    const disposeA = vi.fn();
+    const disposeB = vi.fn();
+    manager.onClose(window.id, disposeA);
+    manager.onClose(window.id, disposeB);
+
+    window.__emitClosed();
+
+    expect(disposeA).toHaveBeenCalledOnce();
+    expect(disposeB).toHaveBeenCalledOnce();
+  });
+
+  it('does not run a disposer that was removed before close', () => {
+    const manager = new WindowManager();
+    const window = createMockWindow();
+    manager.register(window, 'main');
+
+    const dispose = vi.fn();
+    const remove = manager.onClose(window.id, dispose);
+    remove();
+
+    window.__emitClosed();
+    expect(dispose).not.toHaveBeenCalled();
+  });
+
+  it('continues running remaining disposers even if one throws', () => {
+    const manager = new WindowManager();
+    const window = createMockWindow();
+    manager.register(window, 'main');
+
+    const throwing = vi.fn(() => {
+      throw new Error('boom');
+    });
+    const after = vi.fn();
+    manager.onClose(window.id, throwing);
+    manager.onClose(window.id, after);
+
+    expect(() => window.__emitClosed()).not.toThrow();
+    expect(after).toHaveBeenCalledOnce();
+  });
+
+  it('returns a no-op remover when registering a disposer for an unknown window', () => {
+    const manager = new WindowManager();
+    expect(() => manager.onClose(9999, vi.fn())()).not.toThrow();
+  });
+
   it('skips a destroyed window during broadcast', () => {
     const manager = new WindowManager();
     const destroyed = createMockWindow();

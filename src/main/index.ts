@@ -41,8 +41,9 @@ function createMainWindow(): BrowserWindow {
     window.show();
   });
 
-  persistWindowBounds(window, app.getPath('userData'), MAIN_WINDOW_KEY);
   windowManager.register(window, 'main');
+  const disposePersistence = persistWindowBounds(window, app.getPath('userData'), MAIN_WINDOW_KEY);
+  windowManager.onClose(window.id, disposePersistence);
 
   const allowedOrigins = rendererDevServerUrl ? [new URL(rendererDevServerUrl).origin] : [];
   applyNavigationGuards(window.webContents, allowedOrigins);

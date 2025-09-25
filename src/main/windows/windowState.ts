@@ -88,13 +88,15 @@ export function resolveInitialBounds(userDataPath: string, key: string): WindowB
 /**
  * Wires `move`/`resize` (debounced via `close`) persistence for `window`,
  * writing its position, size, and maximized state under `key` so the next
- * launch can restore it.
+ * launch can restore it. Returns a disposer that clears the pending debounce
+ * timer and removes both listeners — callers should run it when the window
+ * closes so no orphaned timer fires against a destroyed `webContents`.
  */
 export function persistWindowBounds(
   window: BrowserWindow,
   userDataPath: string,
   key: string,
-): void {
+): () => void {
   const persist = (): void => {
     if (window.isDestroyed()) return;
     const isMaximized = window.isMaximized();
@@ -111,4 +113,11 @@ export function persistWindowBounds(
   window.on('move', debouncedPersist);
   window.on('resize', debouncedPersist);
   window.on('close', persist);
+
+  return () => {
+    clearTimeout(timer);
+    window.removeListener('move', debouncedPersist);
+    window.removeListener('resize', debouncedPersist);
+    window.removeListener('close', persist);
+  };
 }
