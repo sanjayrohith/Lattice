@@ -11,6 +11,7 @@ import { persistWindowBounds, resolveInitialBounds } from '@main/windows/windowS
 import { enforceSingleInstanceLock } from '@main/app/singleInstance';
 import { registerLifecycleHandlers } from '@main/app/lifecycle';
 import { windowManager } from '@main/windows/WindowManager';
+import { registerPopoutHandler } from '@main/windows/registerPopoutHandler';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -58,6 +59,7 @@ function createMainWindow(): BrowserWindow {
 initializeLogger();
 registerLogHandler();
 registerAppInfoHandler();
+registerPopoutHandler({ isDev, ...(rendererDevServerUrl ? { rendererDevServerUrl } : {}) });
 
 const hasSingleInstanceLock = enforceSingleInstanceLock(app, () => BrowserWindow.getAllWindows()[0]);
 
