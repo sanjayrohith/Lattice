@@ -1,0 +1,118 @@
+/*
+ * Design tokens: dark-first theme applied at the document root via CSS
+ * custom properties. `:root` holds the dark palette (the default); a
+ * `prefers-color-scheme: light` override — and a `[data-theme='light']`
+ * escape hatch for a future manual toggle — replace the color tokens only.
+ * Spacing, radius, and type scale stay constant across themes.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Color */
+  --color-bg: #0e0f12;
+  --color-bg-elevated: #17181d;
+  --color-bg-inset: #0a0b0d;
+  --color-border: #2a2c33;
+  --color-text: #e6e7eb;
+  --color-text-muted: #9a9ca6;
+  --color-accent: #5b8cff;
+  --color-accent-muted: #33456e;
+  --color-success: #3ecf8e;
+  --color-warning: #e6b450;
+  --color-danger: #f2555a;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+
+  /* Radius scale */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Type scale */
+  --font-family-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --color-bg: #f7f7f9;
+    --color-bg-elevated: #ffffff;
+    --color-bg-inset: #ececef;
+    --color-border: #dcdde2;
+    --color-text: #16171a;
+    --color-text-muted: #5c5e68;
+    --color-accent: #2f5fdc;
+    --color-accent-muted: #d6e0fb;
+  }
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --color-bg: #f7f7f9;
+  --color-bg-elevated: #ffffff;
+  --color-bg-inset: #ececef;
+  --color-border: #dcdde2;
+  --color-text: #16171a;
+  --color-text-muted: #5c5e68;
+  --color-accent: #2f5fdc;
+  --color-accent-muted: #d6e0fb;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-bg: #0e0f12;
+  --color-bg-elevated: #17181d;
+  --color-bg-inset: #0a0b0d;
+  --color-border: #2a2c33;
+  --color-text: #e6e7eb;
+  --color-text-muted: #9a9ca6;
+  --color-accent: #5b8cff;
+  --color-accent-muted: #33456e;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.crash-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin: var(--space-6);
+}
