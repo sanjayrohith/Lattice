@@ -18,7 +18,7 @@ vi.mock('electron', () => {
       handle: (channel: string, listener: (event: unknown, payload: unknown) => unknown) => {
         handlers.set(channel, listener);
       },
-      __invoke: (channel: string, payload: unknown) => handlers.get(channel)?.(undefined, payload),
+      __invoke: (channel: string, payload: unknown) => handlers.get(channel)?.({ sender: { id: 1 } }, payload),
     },
   };
 });

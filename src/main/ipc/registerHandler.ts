@@ -7,6 +7,11 @@ import {
   type IpcResult,
 } from '@shared/ipc/contracts';
 
+export interface HandlerContext {
+  /** The `webContents.id` of the renderer that invoked this handler. */
+  senderId: number;
+}
+
 /**
  * Registers a validating `ipcMain.handle` for `channel`:
  *
@@ -20,11 +25,14 @@ import {
  */
 export function registerHandler<C extends InvokableChannel>(
   channel: C,
-  handler: (payload: IpcRequest<C>) => Promise<IpcResponse<C>> | IpcResponse<C>,
+  handler: (
+    payload: IpcRequest<C>,
+    context: HandlerContext,
+  ) => Promise<IpcResponse<C>> | IpcResponse<C>,
 ): void {
   const contract = ipcContracts[channel];
 
-  ipcMain.handle(channel, async (_event, rawPayload): Promise<IpcResult<unknown>> => {
+  ipcMain.handle(channel, async (event, rawPayload): Promise<IpcResult<unknown>> => {
     const parsedRequest = contract.request.safeParse(rawPayload);
 
     if (!parsedRequest.success) {
@@ -38,7 +46,9 @@ export function registerHandler<C extends InvokableChannel>(
     }
 
     try {
-      const data = await handler(parsedRequest.data as IpcRequest<C>);
+      const data = await handler(parsedRequest.data as IpcRequest<C>, {
+        senderId: event.sender.id,
+      });
       const parsedResponse = contract.response.safeParse(data);
 
       if (!parsedResponse.success) {

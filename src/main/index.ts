@@ -12,6 +12,7 @@ import { enforceSingleInstanceLock } from '@main/app/singleInstance';
 import { registerLifecycleHandlers } from '@main/app/lifecycle';
 import { windowManager } from '@main/windows/WindowManager';
 import { registerPopoutHandler } from '@main/windows/registerPopoutHandler';
+import { registerWindowControlsHandlers } from '@main/windows/registerWindowControlsHandlers';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -27,6 +28,7 @@ function createMainWindow(): BrowserWindow {
     width: bounds.width,
     height: bounds.height,
     show: false,
+    frame: false,
     webPreferences: {
       ...hardenedWebPreferences,
       preload: join(__dirname, '../preload/index.mjs'),
@@ -61,6 +63,7 @@ initializeLogger();
 registerLogHandler();
 registerAppInfoHandler();
 registerPopoutHandler({ isDev, ...(rendererDevServerUrl ? { rendererDevServerUrl } : {}) });
+registerWindowControlsHandlers();
 
 const hasSingleInstanceLock = enforceSingleInstanceLock(app, () => BrowserWindow.getAllWindows()[0]);
 

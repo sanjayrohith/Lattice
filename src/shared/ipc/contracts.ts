@@ -56,6 +56,9 @@ const windowPopoutResponseSchema = z.object({
   windowId: z.number(),
 });
 
+const windowControlRequestSchema = z.void();
+const windowControlResponseSchema = z.void();
+
 const stateSnapshotRequestSchema = z.void();
 const stateSnapshotResponseSchema = z.object({
   revision: z.number().int().nonnegative(),
@@ -104,6 +107,18 @@ export const ipcContracts = {
   [IPC_CHANNELS.WINDOW_POPOUT]: {
     request: windowPopoutRequestSchema,
     response: windowPopoutResponseSchema,
+  },
+  [IPC_CHANNELS.WINDOW_MINIMIZE]: {
+    request: windowControlRequestSchema,
+    response: windowControlResponseSchema,
+  },
+  [IPC_CHANNELS.WINDOW_MAXIMIZE_TOGGLE]: {
+    request: windowControlRequestSchema,
+    response: windowControlResponseSchema,
+  },
+  [IPC_CHANNELS.WINDOW_CLOSE]: {
+    request: windowControlRequestSchema,
+    response: windowControlResponseSchema,
   },
   [IPC_CHANNELS.STATE_SNAPSHOT]: {
     request: stateSnapshotRequestSchema,

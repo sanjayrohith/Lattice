@@ -14,6 +14,15 @@ export const IPC_CHANNELS = {
   /** Renderer -> main: promote a docked panel into a native popout window. */
   WINDOW_POPOUT: 'window:popout',
 
+  /** Renderer -> main: minimize the calling window. */
+  WINDOW_MINIMIZE: 'window:minimize',
+
+  /** Renderer -> main: toggle the calling window between maximized and restored. */
+  WINDOW_MAXIMIZE_TOGGLE: 'window:maximize-toggle',
+
+  /** Renderer -> main: close the calling window. */
+  WINDOW_CLOSE: 'window:close',
+
   /** Renderer -> main: request the full current application state snapshot. */
   STATE_SNAPSHOT: 'state:snapshot',
 
