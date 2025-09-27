@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { DockviewShell } from './DockviewShell';
 
 afterEach(() => {
@@ -17,5 +17,18 @@ describe('DockviewShell', () => {
 
     expect(onReady).toHaveBeenCalledOnce();
     expect(onReady.mock.calls[0]?.[0]).toHaveProperty('api');
+  });
+
+  it('applies the default layout preset with all five panels docked by default', () => {
+    render(<DockviewShell />);
+
+    for (const title of ['Agent Roster', 'Conversation', 'Editor', 'Terminal', 'Inspector']) {
+      expect(screen.getByText(title)).toBeTruthy();
+    }
+  });
+
+  it('skips the default layout when skipDefaultLayout is set', () => {
+    render(<DockviewShell skipDefaultLayout />);
+    expect(screen.queryByText('Conversation')).toBeNull();
   });
 });
