@@ -1,0 +1,49 @@
+/*
+ * Maps Dockview's `--dv-*` theming variables onto the app's own design
+ * tokens (defined in `styles/theme.css`) so the docked layout follows the
+ * dark-first theme and any future light-mode override automatically,
+ * instead of shipping a second hardcoded palette.
+ */
+.dockview-theme-lattice {
+  --dv-tabs-and-actions-container-font-size: var(--font-size-sm);
+  --dv-tabs-and-actions-container-height: 32px;
+  --dv-tab-font-size: var(--font-size-sm);
+  --dv-border-radius: var(--radius-sm);
+  --dv-tab-border-radius: var(--radius-sm);
+  --dv-sash-border-radius: 0px;
+
+  --dv-group-view-background-color: var(--color-bg);
+  --dv-tabs-and-actions-container-background-color: var(--color-bg-inset);
+
+  --dv-activegroup-visiblepanel-tab-background-color: var(--color-bg);
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--color-bg-inset);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--color-bg-inset);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--color-bg-inset);
+
+  --dv-activegroup-visiblepanel-tab-color: var(--color-text);
+  --dv-activegroup-hiddenpanel-tab-color: var(--color-text-muted);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--color-text-muted);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--color-text-muted);
+
+  --dv-tab-divider-color: var(--color-border);
+  --dv-separator-border: var(--color-border);
+  --dv-paneview-header-border-color: var(--color-border);
+  --dv-paneview-active-outline-color: var(--color-accent);
+
+  --dv-drag-over-background-color: var(--color-accent-muted);
+  --dv-drag-over-border-color: var(--color-accent);
+  --dv-edge-dock-indicator-color: var(--color-accent);
+
+  --dv-icon-hover-background-color: var(--color-bg-elevated);
+  --dv-tabs-container-scrollbar-color: var(--color-border);
+}
+
+.dockview-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.dockview-shell .dv-dockview {
+  flex: 1;
+}

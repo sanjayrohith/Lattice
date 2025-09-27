@@ -118,6 +118,12 @@ body {
   padding: var(--space-4);
 }
 
+.app-shell__content--dockview {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+}
+
 .title-bar {
   display: flex;
   align-items: center;
