@@ -41,10 +41,15 @@ describe('DockviewShell', () => {
     expect(screen.queryByText('Conversation')).toBeNull();
   });
 
-  it('offers a "move to floating group" action in the tab context menu', () => {
-    const items = getTabContextMenuItems({} as never);
+  it('offers a "move to floating group" action and a native pop-out action in the tab context menu', () => {
+    const panel = { id: 'conversation', api: { close: vi.fn() } };
+    const items = getTabContextMenuItems({ panel } as never);
+
     expect(items).toContain('float');
     expect(items).toContain('close');
+    expect(items.some((item) => typeof item === 'object' && item.label === 'Pop Out to Window')).toBe(
+      true,
+    );
   });
 
   it('resets to the default layout when the Reset Layout button is clicked', async () => {

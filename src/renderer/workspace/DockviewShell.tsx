@@ -10,6 +10,7 @@ import { panelRegistry } from './panelRegistry';
 import { resetLayout } from './defaultLayout';
 import { hydrateLayout } from './hydrateLayout';
 import { useLayoutPersistence } from './useLayoutPersistence';
+import { promotePanelToNativeWindow } from './promotePanelToNativeWindow';
 
 export interface DockviewShellProps {
   onReady?: (event: DockviewReadyEvent) => void;
@@ -19,8 +20,18 @@ export interface DockviewShellProps {
   workspaceId?: string;
 }
 
-export function getTabContextMenuItems(_params: GetTabContextMenuItemsParams) {
-  return ['float' as const, 'separator' as const, 'close' as const];
+export function getTabContextMenuItems(params: GetTabContextMenuItemsParams) {
+  return [
+    'float' as const,
+    {
+      label: 'Pop Out to Window',
+      action: () => {
+        void promotePanelToNativeWindow(params.panel);
+      },
+    },
+    'separator' as const,
+    'close' as const,
+  ];
 }
 
 /**
