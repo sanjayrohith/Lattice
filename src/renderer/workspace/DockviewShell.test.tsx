@@ -1,9 +1,16 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { DockviewShell } from './DockviewShell';
+
+beforeEach(() => {
+  (window as unknown as { electronAPI: { invoke: ReturnType<typeof vi.fn> } }).electronAPI = {
+    invoke: vi.fn().mockResolvedValue({ ok: true, data: { layout: null } }),
+  };
+});
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe('DockviewShell', () => {
@@ -19,16 +26,33 @@ describe('DockviewShell', () => {
     expect(onReady.mock.calls[0]?.[0]).toHaveProperty('api');
   });
 
-  it('applies the default layout preset with all five panels docked by default', () => {
+  it('falls back to the default layout preset when nothing has been persisted', async () => {
     render(<DockviewShell />);
 
-    for (const title of ['Agent Roster', 'Conversation', 'Editor', 'Terminal', 'Inspector']) {
-      expect(screen.getByText(title)).toBeTruthy();
-    }
+    await waitFor(() => {
+      for (const title of ['Agent Roster', 'Conversation', 'Editor', 'Terminal', 'Inspector']) {
+        expect(screen.getAllByText(title).length).toBeGreaterThan(0);
+      }
+    });
   });
 
-  it('skips the default layout when skipDefaultLayout is set', () => {
+  it('skips hydration/default layout when skipDefaultLayout is set', () => {
     render(<DockviewShell skipDefaultLayout />);
     expect(screen.queryByText('Conversation')).toBeNull();
+  });
+
+  it('resets to the default layout when the Reset Layout button is clicked', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    render(<DockviewShell />);
+
+    await waitFor(() => expect(screen.getAllByText('Conversation').length).toBeGreaterThan(0));
+
+    fireEvent.click(screen.getByText('Reset Layout'));
+
+    await waitFor(() => {
+      for (const title of ['Agent Roster', 'Conversation', 'Editor', 'Terminal', 'Inspector']) {
+        expect(screen.getAllByText(title).length).toBeGreaterThan(0);
+      }
+    });
   });
 });

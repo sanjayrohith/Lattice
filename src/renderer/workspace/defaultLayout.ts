@@ -44,3 +44,9 @@ export function applyDefaultLayout(api: DockviewApi): void {
 
   conversation.api.setActive();
 }
+
+/** Clears every panel and reapplies the default workspace preset from scratch. */
+export function resetLayout(api: DockviewApi): void {
+  api.clear();
+  applyDefaultLayout(api);
+}
