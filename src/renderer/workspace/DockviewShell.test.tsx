@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { DockviewShell } from './DockviewShell';
+import { DockviewShell, getTabContextMenuItems } from './DockviewShell';
 
 beforeEach(() => {
   (window as unknown as { electronAPI: { invoke: ReturnType<typeof vi.fn> } }).electronAPI = {
@@ -39,6 +39,12 @@ describe('DockviewShell', () => {
   it('skips hydration/default layout when skipDefaultLayout is set', () => {
     render(<DockviewShell skipDefaultLayout />);
     expect(screen.queryByText('Conversation')).toBeNull();
+  });
+
+  it('offers a "move to floating group" action in the tab context menu', () => {
+    const items = getTabContextMenuItems({} as never);
+    expect(items).toContain('float');
+    expect(items).toContain('close');
   });
 
   it('resets to the default layout when the Reset Layout button is clicked', async () => {

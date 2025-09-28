@@ -1,5 +1,10 @@
 import { useCallback, useState } from 'react';
-import { DockviewReact, type DockviewApi, type DockviewReadyEvent } from 'dockview-react';
+import {
+  DockviewReact,
+  type DockviewApi,
+  type DockviewReadyEvent,
+  type GetTabContextMenuItemsParams,
+} from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
 import { panelRegistry } from './panelRegistry';
 import { resetLayout } from './defaultLayout';
@@ -14,12 +19,20 @@ export interface DockviewShellProps {
   workspaceId?: string;
 }
 
+export function getTabContextMenuItems(_params: GetTabContextMenuItemsParams) {
+  return ['float' as const, 'separator' as const, 'close' as const];
+}
+
 /**
  * Renders the central Dockview surface, resolving panel `component` ids
  * through the shared `panelRegistry` so any panel can be added to a layout
  * by id alone. On mount, hydrates from the persisted layout for
  * `workspaceId` (falling back to the default preset), persists every
  * subsequent change, and exposes a "Reset Layout" command.
+ *
+ * Floating groups (drag a tab out into its own window, or right-click ->
+ * "Move to floating group") and edge groups (drop a panel against the
+ * surface's outer edge to dock it as a collapsible strip) are both enabled.
  */
 export function DockviewShell({
   onReady,
@@ -57,6 +70,10 @@ export function DockviewShell({
         className="dockview-theme-lattice"
         components={panelRegistry}
         onReady={handleReady}
+        disableFloatingGroups={false}
+        dockToEdgeGroups={true}
+        autoHideEdgeGroups={true}
+        getTabContextMenuItems={getTabContextMenuItems}
       />
     </div>
   );
