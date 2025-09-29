@@ -12,6 +12,17 @@ export interface HandlerContext {
   senderId: number;
 }
 
+/** Throw this from a handler to control the failure envelope's `code`, instead of the generic `HANDLER_ERROR`. */
+export class HandlerError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'HandlerError';
+  }
+}
+
 /**
  * Registers a validating `ipcMain.handle` for `channel`:
  *
@@ -63,6 +74,9 @@ export function registerHandler<C extends InvokableChannel>(
 
       return { ok: true, data: parsedResponse.data };
     } catch (error) {
+      if (error instanceof HandlerError) {
+        return { ok: false, error: { code: error.code, message: error.message } };
+      }
       return {
         ok: false,
         error: {

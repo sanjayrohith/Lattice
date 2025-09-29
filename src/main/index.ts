@@ -14,6 +14,7 @@ import { windowManager } from '@main/windows/WindowManager';
 import { registerPopoutHandler } from '@main/windows/registerPopoutHandler';
 import { registerWindowControlsHandlers } from '@main/windows/registerWindowControlsHandlers';
 import { registerLayoutHandlers } from '@main/layout/registerLayoutHandlers';
+import { registerStateHandlers } from '@main/state/registerStateHandlers';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -66,6 +67,7 @@ registerAppInfoHandler();
 registerPopoutHandler({ isDev, ...(rendererDevServerUrl ? { rendererDevServerUrl } : {}) });
 registerWindowControlsHandlers();
 registerLayoutHandlers();
+registerStateHandlers();
 
 const hasSingleInstanceLock = enforceSingleInstanceLock(app, () => BrowserWindow.getAllWindows()[0]);
 
