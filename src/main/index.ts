@@ -15,6 +15,7 @@ import { registerPopoutHandler } from '@main/windows/registerPopoutHandler';
 import { registerWindowControlsHandlers } from '@main/windows/registerWindowControlsHandlers';
 import { registerLayoutHandlers } from '@main/layout/registerLayoutHandlers';
 import { registerStateHandlers } from '@main/state/registerStateHandlers';
+import { initializeDatabase } from '@main/db';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -75,6 +76,7 @@ if (hasSingleInstanceLock) {
   void app.whenReady().then(() => {
     applyContentSecurityPolicy(session.defaultSession);
     applyPermissionPolicy(session.defaultSession);
+    initializeDatabase(app.getPath('userData'));
 
     log.info('application ready');
     createMainWindow();
