@@ -22,18 +22,27 @@ export interface AppStore {
   setSnapshot: (revision: number, state: AppState) => void;
 }
 
-export const useAppStore = create<AppStore>((set) => ({
-  revision: 0,
-  state: createDefaultAppState(),
+/**
+ * Builds an independent store instance. Each native window gets its own via
+ * `useAppStore` below; tests also use this to simulate multiple renderers
+ * converging on the same broadcast stream without sharing module state.
+ */
+export function createAppStore() {
+  return create<AppStore>((set) => ({
+    revision: 0,
+    state: createDefaultAppState(),
 
-  dispatch: async (patches) => {
-    const result = await window.electronAPI.invoke(IPC_CHANNELS.STATE_DISPATCH, { patches });
-    if (!result.ok) {
-      throw new Error(`state dispatch failed: ${result.error.code} ${result.error.message}`);
-    }
-  },
+    dispatch: async (patches) => {
+      const result = await window.electronAPI.invoke(IPC_CHANNELS.STATE_DISPATCH, { patches });
+      if (!result.ok) {
+        throw new Error(`state dispatch failed: ${result.error.code} ${result.error.message}`);
+      }
+    },
 
-  setSnapshot: (revision, state) => {
-    set({ revision, state });
-  },
-}));
+    setSnapshot: (revision, state) => {
+      set({ revision, state });
+    },
+  }));
+}
+
+export const useAppStore = createAppStore();
