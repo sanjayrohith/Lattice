@@ -89,6 +89,11 @@ const layoutLoadResponseSchema = z.object({
   layout: z.unknown().nullable(),
 });
 
+const securityEncryptionStatusRequestSchema = z.void();
+const securityEncryptionStatusResponseSchema = z.object({
+  available: z.boolean(),
+});
+
 /**
  * Maps every channel in the registry to its request and response schema.
  * `registerHandler` and the preload `invoke` wrapper both key off this map
@@ -135,6 +140,10 @@ export const ipcContracts = {
   [IPC_CHANNELS.LAYOUT_LOAD]: {
     request: layoutLoadRequestSchema,
     response: layoutLoadResponseSchema,
+  },
+  [IPC_CHANNELS.SECURITY_ENCRYPTION_STATUS]: {
+    request: securityEncryptionStatusRequestSchema,
+    response: securityEncryptionStatusResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

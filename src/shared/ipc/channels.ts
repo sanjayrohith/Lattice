@@ -37,6 +37,9 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: load the persisted Dockview layout for a workspace. */
   LAYOUT_LOAD: 'layout:load',
+
+  /** Renderer -> main: query whether OS-backed credential encryption is available. */
+  SECURITY_ENCRYPTION_STATUS: 'security:encryption-status',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

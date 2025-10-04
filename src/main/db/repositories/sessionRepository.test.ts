@@ -37,7 +37,11 @@ describe('SessionRepository', () => {
   it('lists sessions most recently updated first', () => {
     const first = repo.create({ title: 'First' });
     const second = repo.create({ title: 'Second' });
-    repo.update(first.id, { title: 'First, revised' });
+    // Force a strictly later `updated_at` than `second`'s creation timestamp
+    // so ordering is deterministic even when both rows are created within
+    // the same millisecond.
+    const laterTimestamp = new Date(Date.now() + 1000).toISOString();
+    db.prepare('UPDATE sessions SET updated_at = ? WHERE id = ?').run(laterTimestamp, first.id);
 
     const list = repo.list();
     expect(list.map((s) => s.id)).toEqual([first.id, second.id]);
