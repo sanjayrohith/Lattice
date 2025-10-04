@@ -94,6 +94,28 @@ const securityEncryptionStatusResponseSchema = z.object({
   available: z.boolean(),
 });
 
+const vaultSetRequestSchema = z.object({
+  id: z.string().min(1),
+  value: z.string().min(1),
+});
+const vaultSetResponseSchema = z.void();
+
+const vaultHasRequestSchema = z.object({ id: z.string().min(1) });
+const vaultHasResponseSchema = z.object({ configured: z.boolean() });
+
+const vaultDeleteRequestSchema = z.object({ id: z.string().min(1) });
+const vaultDeleteResponseSchema = z.object({ deleted: z.boolean() });
+
+const vaultListRequestSchema = z.void();
+const vaultCredentialMetadataSchema = z.object({
+  id: z.string(),
+  configured: z.literal(true),
+  updatedAt: z.string(),
+});
+const vaultListResponseSchema = z.object({
+  credentials: z.array(vaultCredentialMetadataSchema),
+});
+
 /**
  * Maps every channel in the registry to its request and response schema.
  * `registerHandler` and the preload `invoke` wrapper both key off this map
@@ -144,6 +166,22 @@ export const ipcContracts = {
   [IPC_CHANNELS.SECURITY_ENCRYPTION_STATUS]: {
     request: securityEncryptionStatusRequestSchema,
     response: securityEncryptionStatusResponseSchema,
+  },
+  [IPC_CHANNELS.VAULT_SET]: {
+    request: vaultSetRequestSchema,
+    response: vaultSetResponseSchema,
+  },
+  [IPC_CHANNELS.VAULT_HAS]: {
+    request: vaultHasRequestSchema,
+    response: vaultHasResponseSchema,
+  },
+  [IPC_CHANNELS.VAULT_DELETE]: {
+    request: vaultDeleteRequestSchema,
+    response: vaultDeleteResponseSchema,
+  },
+  [IPC_CHANNELS.VAULT_LIST]: {
+    request: vaultListRequestSchema,
+    response: vaultListResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

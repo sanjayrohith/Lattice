@@ -40,6 +40,18 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: query whether OS-backed credential encryption is available. */
   SECURITY_ENCRYPTION_STATUS: 'security:encryption-status',
+
+  /** Renderer -> main: encrypt and store a provider credential. */
+  VAULT_SET: 'vault:set',
+
+  /** Renderer -> main: check whether a credential is configured, without revealing it. */
+  VAULT_HAS: 'vault:has',
+
+  /** Renderer -> main: delete a stored credential. */
+  VAULT_DELETE: 'vault:delete',
+
+  /** Renderer -> main: list metadata for every configured credential. */
+  VAULT_LIST: 'vault:list',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

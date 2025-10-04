@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { app, BrowserWindow, session } from 'electron';
+import { app, BrowserWindow, safeStorage, session } from 'electron';
 import { hardenedWebPreferences } from '@main/security/windowDefaults';
 import { applyContentSecurityPolicy } from '@main/security/contentSecurityPolicy';
 import { applyNavigationGuards } from '@main/security/navigationGuards';
@@ -17,6 +17,8 @@ import { registerLayoutHandlers } from '@main/layout/registerLayoutHandlers';
 import { registerStateHandlers } from '@main/state/registerStateHandlers';
 import { initializeDatabase } from '@main/db';
 import { registerEncryptionStatusHandler } from '@main/security/registerEncryptionStatusHandler';
+import { CredentialVault } from '@main/security/credentialVault';
+import { registerVaultHandlers } from '@main/security/registerVaultHandlers';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -78,7 +80,8 @@ if (hasSingleInstanceLock) {
   void app.whenReady().then(() => {
     applyContentSecurityPolicy(session.defaultSession);
     applyPermissionPolicy(session.defaultSession);
-    initializeDatabase(app.getPath('userData'));
+    const database = initializeDatabase(app.getPath('userData'));
+    registerVaultHandlers(new CredentialVault(database, safeStorage));
 
     log.info('application ready');
     createMainWindow();
