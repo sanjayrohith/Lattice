@@ -12,6 +12,7 @@ export const popoutPanelComponents: Record<PanelId, ComponentType> = {
   [PANEL_IDS.EDITOR]: lazy(() => import('../panels/EditorPanel')),
   [PANEL_IDS.TERMINAL]: lazy(() => import('../panels/TerminalPanel')),
   [PANEL_IDS.INSPECTOR]: lazy(() => import('../panels/InspectorPanel')),
+  [PANEL_IDS.PROVIDER_CREDENTIALS]: lazy(() => import('../panels/ProviderCredentialsPanel')),
 };
 
 export function isPanelId(value: string): value is PanelId {

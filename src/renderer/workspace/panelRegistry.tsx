@@ -11,6 +11,7 @@ export const PANEL_IDS = {
   EDITOR: 'editor',
   TERMINAL: 'terminal',
   INSPECTOR: 'inspector',
+  PROVIDER_CREDENTIALS: 'provider-credentials',
 } as const;
 
 export type PanelId = (typeof PANEL_IDS)[keyof typeof PANEL_IDS];
@@ -40,4 +41,5 @@ export const panelRegistry: Record<PanelId, FunctionComponent<IDockviewPanelProp
   [PANEL_IDS.EDITOR]: withSuspense(() => import('../panels/EditorPanel')),
   [PANEL_IDS.TERMINAL]: withSuspense(() => import('../panels/TerminalPanel')),
   [PANEL_IDS.INSPECTOR]: withSuspense(() => import('../panels/InspectorPanel')),
+  [PANEL_IDS.PROVIDER_CREDENTIALS]: withSuspense(() => import('../panels/ProviderCredentialsPanel')),
 };
