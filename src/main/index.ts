@@ -19,6 +19,7 @@ import { initializeDatabase } from '@main/db';
 import { registerEncryptionStatusHandler } from '@main/security/registerEncryptionStatusHandler';
 import { CredentialVault } from '@main/security/credentialVault';
 import { registerVaultHandlers } from '@main/security/registerVaultHandlers';
+import { createPreferencesStore } from '@main/settings/preferencesStore';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -82,6 +83,7 @@ if (hasSingleInstanceLock) {
     applyPermissionPolicy(session.defaultSession);
     const database = initializeDatabase(app.getPath('userData'));
     registerVaultHandlers(new CredentialVault(database, safeStorage));
+    createPreferencesStore();
 
     log.info('application ready');
     createMainWindow();
