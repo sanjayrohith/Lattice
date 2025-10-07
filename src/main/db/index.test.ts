@@ -29,7 +29,7 @@ describe('initializeDatabase', () => {
       .all()
       .map((row) => (row as { name: string }).name);
 
-    expect(tables).toEqual(['messages', 'sessions', 'settings', 'tool_calls']);
+    expect(tables).toEqual(['messages', 'sessions', 'settings', 'tool_calls', 'usage_records']);
   });
 
   it('returns the same connection on subsequent calls', () => {
