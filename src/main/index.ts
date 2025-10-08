@@ -20,6 +20,7 @@ import { registerEncryptionStatusHandler } from '@main/security/registerEncrypti
 import { CredentialVault } from '@main/security/credentialVault';
 import { registerVaultHandlers } from '@main/security/registerVaultHandlers';
 import { createPreferencesStore } from '@main/settings/preferencesStore';
+import { registerHealthCheckHandler } from '@main/ai/registerHealthCheckHandler';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -82,7 +83,9 @@ if (hasSingleInstanceLock) {
     applyContentSecurityPolicy(session.defaultSession);
     applyPermissionPolicy(session.defaultSession);
     const database = initializeDatabase(app.getPath('userData'));
-    registerVaultHandlers(new CredentialVault(database, safeStorage));
+    const vault = new CredentialVault(database, safeStorage);
+    registerVaultHandlers(vault);
+    registerHealthCheckHandler(vault.credentials);
     createPreferencesStore();
 
     log.info('application ready');

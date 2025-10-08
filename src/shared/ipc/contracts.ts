@@ -106,6 +106,15 @@ const vaultHasResponseSchema = z.object({ configured: z.boolean() });
 const vaultDeleteRequestSchema = z.object({ id: z.string().min(1) });
 const vaultDeleteResponseSchema = z.object({ deleted: z.boolean() });
 
+const aiProviderHealthCheckRequestSchema = z.object({
+  providerId: z.enum(['openai', 'anthropic', 'google']),
+  modelId: z.string().min(1),
+});
+const aiProviderHealthCheckResponseSchema = z.object({
+  ok: z.boolean(),
+  error: z.string().optional(),
+});
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -182,6 +191,10 @@ export const ipcContracts = {
   [IPC_CHANNELS.VAULT_LIST]: {
     request: vaultListRequestSchema,
     response: vaultListResponseSchema,
+  },
+  [IPC_CHANNELS.AI_PROVIDER_HEALTH_CHECK]: {
+    request: aiProviderHealthCheckRequestSchema,
+    response: aiProviderHealthCheckResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

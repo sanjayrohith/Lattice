@@ -7,7 +7,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function stubElectronAPI(configured: string[] = []) {
+function stubElectronAPI(
+  configured: string[] = [],
+  healthCheckResult: { ok: boolean; error?: string } = { ok: true },
+) {
   const state = { configured: new Set(configured) };
   const invoke = vi.fn(async (channel: string, payload: unknown) => {
     if (channel === 'vault:list') {
@@ -31,6 +34,9 @@ function stubElectronAPI(configured: string[] = []) {
       const { id } = payload as { id: string };
       const deleted = state.configured.delete(id);
       return { ok: true, data: { deleted } };
+    }
+    if (channel === 'ai:provider-health-check') {
+      return { ok: true, data: healthCheckResult };
     }
     throw new Error(`unexpected channel ${channel}`);
   });
@@ -88,5 +94,44 @@ describe('ProviderCredentialsPanel', () => {
 
     const saveButtons = screen.getAllByRole('button', { name: 'Save' });
     expect((saveButtons[0] as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('disables the test connection button until a credential is configured', async () => {
+    stubElectronAPI();
+    render(<ProviderCredentialsPanel />);
+
+    await waitFor(() =>
+      expect(
+        (screen.getAllByRole('button', { name: 'Test connection' })[0] as HTMLButtonElement).disabled,
+      ).toBe(true),
+    );
+  });
+
+  it('reports a successful connection test', async () => {
+    stubElectronAPI(['openai'], { ok: true });
+    render(<ProviderCredentialsPanel />);
+
+    await waitFor(() => expect(screen.getByTestId('status-openai').textContent).toBe('Configured'));
+    const status = screen.getByTestId('status-openai');
+    const row = status.closest('li');
+    if (!row) throw new Error('expected status to be inside a row');
+    fireEvent.click(within(row).getByRole('button', { name: 'Test connection' }));
+
+    await waitFor(() => expect(screen.getByTestId('health-openai').textContent).toBe('Connected'));
+  });
+
+  it('reports a failed connection test with the error message', async () => {
+    stubElectronAPI(['openai'], { ok: false, error: 'invalid api key' });
+    render(<ProviderCredentialsPanel />);
+
+    await waitFor(() => expect(screen.getByTestId('status-openai').textContent).toBe('Configured'));
+    const status = screen.getByTestId('status-openai');
+    const row = status.closest('li');
+    if (!row) throw new Error('expected status to be inside a row');
+    fireEvent.click(within(row).getByRole('button', { name: 'Test connection' }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('health-openai').textContent).toBe('Failed: invalid api key'),
+    );
   });
 });

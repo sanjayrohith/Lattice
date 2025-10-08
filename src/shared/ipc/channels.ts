@@ -52,6 +52,9 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: list metadata for every configured credential. */
   VAULT_LIST: 'vault:list',
+
+  /** Renderer -> main: verify a configured provider credential actually authenticates. */
+  AI_PROVIDER_HEALTH_CHECK: 'ai:provider-health-check',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

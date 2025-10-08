@@ -2,15 +2,19 @@ import { useCallback, useEffect, useState } from 'react';
 import { IPC_CHANNELS } from '@shared/ipc/channels';
 
 interface ProviderDescriptor {
-  id: string;
+  id: 'openai' | 'anthropic' | 'google';
   displayName: string;
+  /** The model used for the connectivity health check — any model on the provider's catalog works. */
+  healthCheckModelId: string;
 }
 
 const PROVIDERS: readonly ProviderDescriptor[] = [
-  { id: 'openai', displayName: 'OpenAI' },
-  { id: 'anthropic', displayName: 'Anthropic' },
-  { id: 'google', displayName: 'Google' },
+  { id: 'openai', displayName: 'OpenAI', healthCheckModelId: 'gpt-4o-mini' },
+  { id: 'anthropic', displayName: 'Anthropic', healthCheckModelId: 'claude-3-5-haiku-latest' },
+  { id: 'google', displayName: 'Google', healthCheckModelId: 'gemini-1.5-flash' },
 ];
+
+type HealthCheckStatus = { state: 'ok' } | { state: 'error'; message: string };
 
 /**
  * Settings panel for provider API keys. Every key input is write-only —
@@ -22,6 +26,7 @@ export default function ProviderCredentialsPanel(): React.JSX.Element {
   const [configuredIds, setConfiguredIds] = useState<ReadonlySet<string>>(new Set());
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [pendingId, setPendingId] = useState<string | undefined>(undefined);
+  const [healthStatus, setHealthStatus] = useState<Record<string, HealthCheckStatus>>({});
 
   const refresh = useCallback(async () => {
     const result = await window.electronAPI.invoke(IPC_CHANNELS.VAULT_LIST, undefined);
@@ -69,6 +74,36 @@ export default function ProviderCredentialsPanel(): React.JSX.Element {
       }
     } finally {
       setPendingId(undefined);
+      setHealthStatus((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+  }
+
+  async function handleTestConnection(provider: ProviderDescriptor): Promise<void> {
+    setPendingId(provider.id);
+    try {
+      const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_PROVIDER_HEALTH_CHECK, {
+        providerId: provider.id,
+        modelId: provider.healthCheckModelId,
+      });
+      if (result.ok) {
+        setHealthStatus((prev) => ({
+          ...prev,
+          [provider.id]: result.data.ok
+            ? { state: 'ok' }
+            : { state: 'error', message: result.data.error ?? 'unknown error' },
+        }));
+      } else {
+        setHealthStatus((prev) => ({
+          ...prev,
+          [provider.id]: { state: 'error', message: result.error.message },
+        }));
+      }
+    } finally {
+      setPendingId(undefined);
     }
   }
 
@@ -79,6 +114,7 @@ export default function ProviderCredentialsPanel(): React.JSX.Element {
         {PROVIDERS.map((provider) => {
           const configured = configuredIds.has(provider.id);
           const busy = pendingId === provider.id;
+          const health = healthStatus[provider.id];
 
           return (
             <li key={provider.id} className="provider-credentials__row">
@@ -116,6 +152,21 @@ export default function ProviderCredentialsPanel(): React.JSX.Element {
               >
                 Delete
               </button>
+              <button
+                type="button"
+                disabled={busy || !configured}
+                onClick={() => void handleTestConnection(provider)}
+              >
+                Test connection
+              </button>
+              {health ? (
+                <span
+                  data-testid={`health-${provider.id}`}
+                  className={`provider-credentials__health provider-credentials__health--${health.state}`}
+                >
+                  {health.state === 'ok' ? 'Connected' : `Failed: ${health.message}`}
+                </span>
+              ) : null}
             </li>
           );
         })}
