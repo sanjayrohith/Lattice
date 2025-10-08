@@ -40,3 +40,13 @@ export interface Tool<Input = unknown, Output = unknown> {
 export function defineTool<Input, Output>(tool: Tool<Input, Output>): Tool<Input, Output> {
   return tool;
 }
+
+/**
+ * A type-erased tool as held by the registry and the agent loop, which
+ * dispatch on a runtime-validated `name` rather than a statically known
+ * `Input`/`Output`. Every concrete tool is still authored against the
+ * fully generic {@link Tool} via {@link defineTool}; this alias exists
+ * only at the heterogeneous-collection boundary.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- see comment above
+export type AnyTool = Tool<any, any>;
