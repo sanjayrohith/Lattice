@@ -1,6 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { z } from 'zod';
+import { matchesAnyGlob } from './globMatch';
 import { resolveWorkspacePath } from './pathSandbox';
 import { defineTool } from './types';
 
@@ -10,16 +11,6 @@ export interface DirectoryEntry {
   path: string;
   type: DirectoryEntryType;
   depth: number;
-}
-
-/** Converts a simple `*`-wildcard glob (matched against a basename) into a `RegExp`. */
-function globToRegExp(pattern: string): RegExp {
-  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
-  return new RegExp(`^${escaped}$`);
-}
-
-function isIgnored(name: string, patterns: readonly string[]): boolean {
-  return patterns.some((pattern) => globToRegExp(pattern).test(name));
 }
 
 async function walk(
@@ -34,7 +25,7 @@ async function walk(
   const sorted = [...dirents].sort((a, b) => a.name.localeCompare(b.name));
 
   for (const dirent of sorted) {
-    if (isIgnored(dirent.name, ignorePatterns)) continue;
+    if (matchesAnyGlob(dirent.name, ignorePatterns)) continue;
 
     const entryPath = join(currentDir, dirent.name);
     const type: DirectoryEntryType = dirent.isDirectory()
