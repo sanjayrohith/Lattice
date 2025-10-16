@@ -1,7 +1,5 @@
-import { randomUUID } from 'node:crypto';
-import { mkdir, rename, rm, writeFile as fsWriteFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
 import { z } from 'zod';
+import { atomicWriteFile } from './atomicWrite';
 import { resolveWorkspacePath } from './pathSandbox';
 import { defineTool } from './types';
 
@@ -30,20 +28,7 @@ export const writeFileTool = defineTool({
   defaultConsent: 'ask',
   execute: async (input, context): Promise<WriteFileOutput> => {
     const resolvedPath = resolveWorkspacePath(context.workspaceRoot, input.path);
-    const directory = dirname(resolvedPath);
-    await mkdir(directory, { recursive: true });
-
-    const tempPath = `${resolvedPath}.tmp-${randomUUID()}`;
-    const buffer = Buffer.from(input.content, 'utf-8');
-
-    try {
-      await fsWriteFile(tempPath, buffer);
-      await rename(tempPath, resolvedPath);
-    } catch (error) {
-      await rm(tempPath, { force: true });
-      throw error;
-    }
-
-    return { path: input.path, bytesWritten: buffer.length };
+    const bytesWritten = await atomicWriteFile(resolvedPath, input.content);
+    return { path: input.path, bytesWritten };
   },
 });
