@@ -9,12 +9,20 @@ import type { z } from 'zod';
  */
 export type ConsentPolicy = 'always' | 'ask' | 'never';
 
+/** One incremental chunk of a long-running tool's output, as it becomes available. */
+export interface ToolOutputChunk {
+  stream: 'stdout' | 'stderr';
+  text: string;
+}
+
 /** Per-call context a tool's `execute` needs but that is never part of the model-visible input. */
 export interface ToolExecutionContext {
   /** The sandboxed root directory every filesystem-touching tool must resolve paths against. */
   workspaceRoot: string;
   /** Aborts long-running work (e.g. `run_command`) when the owning run is cancelled. */
   signal?: AbortSignal;
+  /** Called with each incremental chunk a streaming tool (e.g. `run_command`) produces, in order. */
+  onOutput?: (chunk: ToolOutputChunk) => void;
 }
 
 /**
