@@ -115,6 +115,9 @@ const aiProviderHealthCheckResponseSchema = z.object({
   error: z.string().optional(),
 });
 
+const runCancelRequestSchema = z.object({ runId: z.string().min(1) });
+const runCancelResponseSchema = z.object({ cancelled: z.boolean() });
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -195,6 +198,10 @@ export const ipcContracts = {
   [IPC_CHANNELS.AI_PROVIDER_HEALTH_CHECK]: {
     request: aiProviderHealthCheckRequestSchema,
     response: aiProviderHealthCheckResponseSchema,
+  },
+  [IPC_CHANNELS.RUN_CANCEL]: {
+    request: runCancelRequestSchema,
+    response: runCancelResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

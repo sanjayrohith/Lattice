@@ -21,6 +21,8 @@ import { CredentialVault } from '@main/security/credentialVault';
 import { registerVaultHandlers } from '@main/security/registerVaultHandlers';
 import { createPreferencesStore } from '@main/settings/preferencesStore';
 import { registerHealthCheckHandler } from '@main/ai/registerHealthCheckHandler';
+import { RunAbortRegistry } from '@main/loop/runAbortRegistry';
+import { registerRunCancelHandler } from '@main/loop/registerRunCancelHandler';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -86,6 +88,7 @@ if (hasSingleInstanceLock) {
     const vault = new CredentialVault(database, safeStorage);
     registerVaultHandlers(vault);
     registerHealthCheckHandler(vault.credentials);
+    registerRunCancelHandler(new RunAbortRegistry());
     createPreferencesStore();
 
     log.info('application ready');

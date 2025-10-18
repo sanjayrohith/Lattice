@@ -55,6 +55,9 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: verify a configured provider credential actually authenticates. */
   AI_PROVIDER_HEALTH_CHECK: 'ai:provider-health-check',
+
+  /** Renderer -> main: cancel an in-flight agent run. */
+  RUN_CANCEL: 'run:cancel',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
