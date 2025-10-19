@@ -23,6 +23,9 @@ import { createPreferencesStore } from '@main/settings/preferencesStore';
 import { registerHealthCheckHandler } from '@main/ai/registerHealthCheckHandler';
 import { RunAbortRegistry } from '@main/loop/runAbortRegistry';
 import { registerRunCancelHandler } from '@main/loop/registerRunCancelHandler';
+import { PendingDecisionRegistry } from '@main/loop/abortCleanup';
+import { registerConsentHandlers } from '@main/consent/registerConsentHandlers';
+import type { ConsentDecision } from '@main/consent/consentGate';
 
 const MAIN_WINDOW_KEY = 'main';
 
@@ -89,6 +92,7 @@ if (hasSingleInstanceLock) {
     registerVaultHandlers(vault);
     registerHealthCheckHandler(vault.credentials);
     registerRunCancelHandler(new RunAbortRegistry());
+    registerConsentHandlers(new PendingDecisionRegistry<ConsentDecision>());
     createPreferencesStore();
 
     log.info('application ready');

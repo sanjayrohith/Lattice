@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { IPC_CHANNELS } from './channels';
-import { ipcEventContracts, runStreamEventSchema } from './events';
+import { consentRequestEventSchema, ipcEventContracts, runStreamEventSchema } from './events';
 
 describe('runStreamEventSchema', () => {
   it('accepts every declared event variant', () => {
@@ -23,6 +23,27 @@ describe('runStreamEventSchema', () => {
 
   it('rejects a text-delta event missing its delta field', () => {
     expect(runStreamEventSchema.safeParse({ type: 'text-delta', runId: 'r1' }).success).toBe(false);
+  });
+});
+
+describe('consentRequestEventSchema', () => {
+  it('accepts a well-formed consent request', () => {
+    const result = consentRequestEventSchema.safeParse({
+      runId: 'r1',
+      toolCallId: 'c1',
+      toolName: 'write_file',
+      input: { path: 'a.txt' },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a request missing toolCallId', () => {
+    const result = consentRequestEventSchema.safeParse({
+      runId: 'r1',
+      toolName: 'write_file',
+      input: {},
+    });
+    expect(result.success).toBe(false);
   });
 });
 

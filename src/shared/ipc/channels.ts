@@ -61,6 +61,12 @@ export const IPC_CHANNELS = {
 
   /** Main -> renderer (broadcast): a throttled, coalesced batch of run stream events. */
   RUN_STREAM: 'run:stream',
+
+  /** Main -> renderer (broadcast): a tool call is awaiting a consent decision. */
+  CONSENT_REQUEST: 'consent:request',
+
+  /** Renderer -> main: resolve a pending consent request by its correlation id. */
+  CONSENT_RESPOND: 'consent:respond',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

@@ -57,7 +57,7 @@ describe('ConsentGate', () => {
     await Promise.resolve();
 
     expect(stateMachine.current).toBe('awaiting-consent');
-    expect(notifyPending).toHaveBeenCalledWith({
+    expect(notifyPending).toHaveBeenCalledWith('s1', {
       toolCallId: 'c1',
       toolName: 'write_file',
       input: { path: 'a.txt' },

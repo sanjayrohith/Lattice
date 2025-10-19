@@ -37,12 +37,28 @@ export const runStreamEventSchema = z.discriminatedUnion('type', [
 ]);
 export type RunStreamEvent = z.infer<typeof runStreamEventSchema>;
 
+/**
+ * A tool call awaiting a consent decision, broadcast to every window so
+ * whichever one is focused can present the consent modal. Carries a
+ * correlation id (`toolCallId`) and the fully resolved arguments the
+ * tool would run with — not just its name — so the user can see exactly
+ * what they are approving.
+ */
+export const consentRequestEventSchema = z.object({
+  runId: z.string(),
+  toolCallId: z.string(),
+  toolName: z.string(),
+  input: z.unknown(),
+});
+export type ConsentRequestEvent = z.infer<typeof consentRequestEventSchema>;
+
 export const ipcEventContracts = {
   [IPC_CHANNELS.STATE_REVISION]: z.object({
     revision: z.number().int().nonnegative(),
     state: z.unknown(),
   }),
   [IPC_CHANNELS.RUN_STREAM]: z.array(runStreamEventSchema),
+  [IPC_CHANNELS.CONSENT_REQUEST]: consentRequestEventSchema,
 } satisfies Partial<Record<IpcChannel, z.ZodTypeAny>>;
 
 export type IpcEventContracts = typeof ipcEventContracts;

@@ -118,6 +118,12 @@ const aiProviderHealthCheckResponseSchema = z.object({
 const runCancelRequestSchema = z.object({ runId: z.string().min(1) });
 const runCancelResponseSchema = z.object({ cancelled: z.boolean() });
 
+const consentRespondRequestSchema = z.object({
+  toolCallId: z.string().min(1),
+  decision: z.enum(['accepted', 'declined']),
+});
+const consentRespondResponseSchema = z.object({ resolved: z.boolean() });
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -202,6 +208,10 @@ export const ipcContracts = {
   [IPC_CHANNELS.RUN_CANCEL]: {
     request: runCancelRequestSchema,
     response: runCancelResponseSchema,
+  },
+  [IPC_CHANNELS.CONSENT_RESPOND]: {
+    request: consentRespondRequestSchema,
+    response: consentRespondResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

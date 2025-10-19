@@ -33,7 +33,7 @@ export class ConsentGate {
     private readonly policyStore: ConsentPolicyStore,
     private readonly pendingDecisions: PendingDecisionRegistry<ConsentDecision>,
     private readonly stateMachine: AgentRunStateMachine,
-    private readonly notifyPending: (request: ConsentGateRequest) => void,
+    private readonly notifyPending: (sessionId: string, request: ConsentGateRequest) => void,
   ) {}
 
   async requestConsent(
@@ -47,7 +47,7 @@ export class ConsentGate {
     if (policy === 'always') return 'accepted';
 
     this.stateMachine.transition('awaiting-consent');
-    this.notifyPending(request);
+    this.notifyPending(sessionId, request);
 
     const decision = await new Promise<ConsentDecision>((resolve) => {
       this.pendingDecisions.register(request.toolCallId, resolve);
