@@ -58,6 +58,9 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: cancel an in-flight agent run. */
   RUN_CANCEL: 'run:cancel',
+
+  /** Main -> renderer (broadcast): a throttled, coalesced batch of run stream events. */
+  RUN_STREAM: 'run:stream',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
