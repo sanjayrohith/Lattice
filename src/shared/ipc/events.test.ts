@@ -10,6 +10,8 @@ describe('runStreamEventSchema', () => {
       { type: 'tool-start', runId: 'r1', toolCallId: 'c1', toolName: 'read_file' },
       { type: 'tool-result', runId: 'r1', toolCallId: 'c1', result: { content: 'hi' } },
       { type: 'state-change', runId: 'r1', state: 'streaming' },
+      { type: 'state-change', runId: 'r1', state: 'streaming', step: 2 },
+      { type: 'usage', runId: 'r1', promptTokens: 10, completionTokens: 5, totalTokens: 15 },
     ];
 
     for (const sample of samples) {

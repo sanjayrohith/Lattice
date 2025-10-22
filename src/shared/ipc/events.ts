@@ -33,7 +33,20 @@ export const runStreamEventSchema = z.discriminatedUnion('type', [
     toolCallId: z.string(),
     result: z.unknown(),
   }),
-  z.object({ type: z.literal('state-change'), runId: z.string(), state: z.string() }),
+  z.object({
+    type: z.literal('state-change'),
+    runId: z.string(),
+    state: z.string(),
+    /** The 1-indexed loop iteration this state change occurred on, when known. */
+    step: z.number().int().nonnegative().optional(),
+  }),
+  z.object({
+    type: z.literal('usage'),
+    runId: z.string(),
+    promptTokens: z.number().int().nonnegative(),
+    completionTokens: z.number().int().nonnegative(),
+    totalTokens: z.number().int().nonnegative(),
+  }),
 ]);
 export type RunStreamEvent = z.infer<typeof runStreamEventSchema>;
 
