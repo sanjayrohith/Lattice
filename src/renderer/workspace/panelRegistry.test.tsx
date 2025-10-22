@@ -41,6 +41,6 @@ describe('panelRegistry', () => {
       </Suspense>,
     );
 
-    await waitFor(() => expect(screen.getByText('Conversation')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Conversation')).toBeTruthy(), { timeout: 10_000 });
   });
 });

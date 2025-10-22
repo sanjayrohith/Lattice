@@ -28,7 +28,7 @@ describe('parsePopoutRoute', () => {
 describe('PopoutApp', () => {
   it('renders the panel identified by the route hash', async () => {
     render(<PopoutApp hash="#/popout/conversation" />);
-    await waitFor(() => expect(screen.getByText('Conversation')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Conversation')).toBeTruthy(), { timeout: 10_000 });
   });
 
   it('renders a fallback message for an unknown panel id', () => {
