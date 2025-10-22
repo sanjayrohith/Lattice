@@ -25,6 +25,7 @@ import { RunAbortRegistry } from '@main/loop/runAbortRegistry';
 import { registerRunCancelHandler } from '@main/loop/registerRunCancelHandler';
 import { PendingDecisionRegistry } from '@main/loop/abortCleanup';
 import { registerConsentHandlers } from '@main/consent/registerConsentHandlers';
+import { ConsentPolicyStore } from '@main/consent/consentPolicyStore';
 import type { ConsentDecision } from '@main/consent/consentGate';
 
 const MAIN_WINDOW_KEY = 'main';
@@ -92,7 +93,7 @@ if (hasSingleInstanceLock) {
     registerVaultHandlers(vault);
     registerHealthCheckHandler(vault.credentials);
     registerRunCancelHandler(new RunAbortRegistry());
-    registerConsentHandlers(new PendingDecisionRegistry<ConsentDecision>());
+    registerConsentHandlers(new PendingDecisionRegistry<ConsentDecision>(), new ConsentPolicyStore());
     createPreferencesStore();
 
     log.info('application ready');

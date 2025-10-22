@@ -119,8 +119,10 @@ const runCancelRequestSchema = z.object({ runId: z.string().min(1) });
 const runCancelResponseSchema = z.object({ cancelled: z.boolean() });
 
 const consentRespondRequestSchema = z.object({
+  runId: z.string().min(1),
   toolCallId: z.string().min(1),
-  decision: z.enum(['accepted', 'declined']),
+  toolName: z.string().min(1),
+  decision: z.enum(['accept-once', 'accept-always', 'decline']),
 });
 const consentRespondResponseSchema = z.object({ resolved: z.boolean() });
 

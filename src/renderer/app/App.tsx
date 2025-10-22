@@ -4,6 +4,7 @@ import { TitleBar } from '../shell/TitleBar';
 import { StatusBar } from '../shell/StatusBar';
 import { DockviewShell } from '../workspace/DockviewShell';
 import { useIpcHydration } from '../state/ipcHydration';
+import { ConsentModal } from '../consent/ConsentModal';
 import '../workspace/dockviewTheme.css';
 
 export function App(): JSX.Element {
@@ -16,6 +17,7 @@ export function App(): JSX.Element {
         <DockviewShell />
       </main>
       <StatusBar />
+      <ConsentModal />
     </div>
   );
 }
