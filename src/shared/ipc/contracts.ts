@@ -126,6 +126,51 @@ const consentRespondRequestSchema = z.object({
 });
 const consentRespondResponseSchema = z.object({ resolved: z.boolean() });
 
+const acpConnectorConfigSchema = z.discriminatedUnion('transport', [
+  z.object({
+    id: z.string().min(1),
+    displayName: z.string().min(1),
+    transport: z.literal('stdio'),
+    command: z.string().min(1),
+    args: z.array(z.string()).default([]),
+    env: z.record(z.string(), z.string()).default({}),
+    cwd: z.string().optional(),
+    enabled: z.boolean().default(true),
+  }),
+  z.object({
+    id: z.string().min(1),
+    displayName: z.string().min(1),
+    transport: z.literal('http'),
+    url: z.string().url(),
+    headers: z.record(z.string(), z.string()).default({}),
+    enabled: z.boolean().default(true),
+  }),
+]);
+
+const acpConnectorHealthSchema = z.object({
+  connectorId: z.string(),
+  state: z.enum(['starting', 'running', 'restarting', 'unavailable', 'stopped']),
+  consecutiveFailures: z.number().int().nonnegative(),
+  lastError: z.string().optional(),
+});
+
+const acpConnectorListRequestSchema = z.void();
+const acpConnectorListResponseSchema = z.object({
+  connectors: z.array(z.object({ config: acpConnectorConfigSchema, health: acpConnectorHealthSchema })),
+});
+
+const acpConnectorUpsertRequestSchema = z.object({ config: acpConnectorConfigSchema });
+const acpConnectorUpsertResponseSchema = z.object({ config: acpConnectorConfigSchema });
+
+const acpConnectorDeleteRequestSchema = z.object({ id: z.string().min(1) });
+const acpConnectorDeleteResponseSchema = z.object({ deleted: z.boolean() });
+
+const acpConnectorSetEnabledRequestSchema = z.object({ id: z.string().min(1), enabled: z.boolean() });
+const acpConnectorSetEnabledResponseSchema = z.object({ config: acpConnectorConfigSchema.nullable() });
+
+const acpConnectorTestRequestSchema = z.object({ id: z.string().min(1) });
+const acpConnectorTestResponseSchema = z.object({ ok: z.boolean(), error: z.string().optional() });
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -214,6 +259,26 @@ export const ipcContracts = {
   [IPC_CHANNELS.CONSENT_RESPOND]: {
     request: consentRespondRequestSchema,
     response: consentRespondResponseSchema,
+  },
+  [IPC_CHANNELS.ACP_CONNECTOR_LIST]: {
+    request: acpConnectorListRequestSchema,
+    response: acpConnectorListResponseSchema,
+  },
+  [IPC_CHANNELS.ACP_CONNECTOR_UPSERT]: {
+    request: acpConnectorUpsertRequestSchema,
+    response: acpConnectorUpsertResponseSchema,
+  },
+  [IPC_CHANNELS.ACP_CONNECTOR_DELETE]: {
+    request: acpConnectorDeleteRequestSchema,
+    response: acpConnectorDeleteResponseSchema,
+  },
+  [IPC_CHANNELS.ACP_CONNECTOR_SET_ENABLED]: {
+    request: acpConnectorSetEnabledRequestSchema,
+    response: acpConnectorSetEnabledResponseSchema,
+  },
+  [IPC_CHANNELS.ACP_CONNECTOR_TEST]: {
+    request: acpConnectorTestRequestSchema,
+    response: acpConnectorTestResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

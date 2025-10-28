@@ -67,6 +67,21 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: resolve a pending consent request by its correlation id. */
   CONSENT_RESPOND: 'consent:respond',
+
+  /** Renderer -> main: list every configured ACP connector and its live health. */
+  ACP_CONNECTOR_LIST: 'acp:connector-list',
+
+  /** Renderer -> main: create or update an ACP connector's configuration. */
+  ACP_CONNECTOR_UPSERT: 'acp:connector-upsert',
+
+  /** Renderer -> main: delete an ACP connector's configuration. */
+  ACP_CONNECTOR_DELETE: 'acp:connector-delete',
+
+  /** Renderer -> main: enable or disable a configured ACP connector. */
+  ACP_CONNECTOR_SET_ENABLED: 'acp:connector-set-enabled',
+
+  /** Renderer -> main: attempt to start a connector and report whether it came up healthy. */
+  ACP_CONNECTOR_TEST: 'acp:connector-test',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
