@@ -16,16 +16,3 @@ export const modelConfigSchema = z.object({
   systemPrompt: z.string().default(''),
 });
 export type ModelConfig = z.infer<typeof modelConfigSchema>;
-
-/**
- * A runnable agent profile: its identity plus the model configuration it
- * drives. Expanded in Phase 3 (`feat(agents): define agent profile
- * model`) with a backend reference, tool allowlist, and step budget once
- * the orchestrator can target either an SDK model or an ACP connector.
- */
-export const agentProfileSchema = z.object({
-  id: z.string().min(1),
-  displayName: z.string().min(1),
-  modelConfig: modelConfigSchema,
-});
-export type AgentProfile = z.infer<typeof agentProfileSchema>;
