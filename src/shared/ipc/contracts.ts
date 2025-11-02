@@ -171,6 +171,71 @@ const acpConnectorSetEnabledResponseSchema = z.object({ config: acpConnectorConf
 const acpConnectorTestRequestSchema = z.object({ id: z.string().min(1) });
 const acpConnectorTestResponseSchema = z.object({ ok: z.boolean(), error: z.string().optional() });
 
+const agentBackendRefSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('sdk'),
+    modelConfig: z.object({
+      providerId: z.enum(['openai', 'anthropic', 'google']),
+      modelId: z.string().min(1),
+      temperature: z.number().min(0).max(2),
+      maxTokens: z.number().int().positive(),
+      systemPrompt: z.string(),
+    }),
+  }),
+  z.object({ kind: z.literal('acp'), connectorId: z.string().min(1) }),
+]);
+
+const agentRoleEnumSchema = z.enum([
+  'worker',
+  'orchestrator',
+  'project-manager',
+  'architect',
+  'developer',
+  'devops',
+  'reviewer',
+  'critic',
+]);
+
+const agentProfileResponseSchema = z.object({
+  id: z.string(),
+  displayName: z.string(),
+  backend: agentBackendRefSchema,
+  systemPrompt: z.string(),
+  toolAllowlist: z.array(z.string()).optional(),
+  stepBudget: z.number().int().positive(),
+  role: agentRoleEnumSchema,
+});
+
+const agentProfileInputSchema = z.object({
+  displayName: z.string().min(1),
+  backend: agentBackendRefSchema,
+  systemPrompt: z.string().optional(),
+  toolAllowlist: z.array(z.string()).optional(),
+  stepBudget: z.number().int().positive().optional(),
+  role: agentRoleEnumSchema.optional(),
+});
+
+const agentListRequestSchema = z.void();
+const agentListResponseSchema = z.object({ agents: z.array(agentProfileResponseSchema) });
+
+const agentCreateRequestSchema = z.object({ profile: agentProfileInputSchema });
+const agentCreateResponseSchema = z.object({ agent: agentProfileResponseSchema });
+
+const agentUpdateRequestSchema = z.object({
+  id: z.string().min(1),
+  patch: agentProfileInputSchema.partial(),
+});
+const agentUpdateResponseSchema = z.object({ agent: agentProfileResponseSchema.nullable() });
+
+const agentDuplicateRequestSchema = z.object({
+  id: z.string().min(1),
+  displayName: z.string().min(1).optional(),
+});
+const agentDuplicateResponseSchema = z.object({ agent: agentProfileResponseSchema.nullable() });
+
+const agentDeleteRequestSchema = z.object({ id: z.string().min(1) });
+const agentDeleteResponseSchema = z.object({ deleted: z.boolean() });
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -279,6 +344,26 @@ export const ipcContracts = {
   [IPC_CHANNELS.ACP_CONNECTOR_TEST]: {
     request: acpConnectorTestRequestSchema,
     response: acpConnectorTestResponseSchema,
+  },
+  [IPC_CHANNELS.AGENT_LIST]: {
+    request: agentListRequestSchema,
+    response: agentListResponseSchema,
+  },
+  [IPC_CHANNELS.AGENT_CREATE]: {
+    request: agentCreateRequestSchema,
+    response: agentCreateResponseSchema,
+  },
+  [IPC_CHANNELS.AGENT_UPDATE]: {
+    request: agentUpdateRequestSchema,
+    response: agentUpdateResponseSchema,
+  },
+  [IPC_CHANNELS.AGENT_DUPLICATE]: {
+    request: agentDuplicateRequestSchema,
+    response: agentDuplicateResponseSchema,
+  },
+  [IPC_CHANNELS.AGENT_DELETE]: {
+    request: agentDeleteRequestSchema,
+    response: agentDeleteResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

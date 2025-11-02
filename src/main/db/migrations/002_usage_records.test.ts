@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type Database from 'better-sqlite3';
 import { openDatabase, runMigrations } from '../database';
-import { migrations } from './index';
+import { coreSchemaMigration } from './001_core_schema';
+import { usageRecordsMigration } from './002_usage_records';
 
 describe('usage records migration', () => {
   let userDataPath: string;
@@ -13,7 +14,7 @@ describe('usage records migration', () => {
   beforeEach(() => {
     userDataPath = mkdtempSync(join(tmpdir(), 'lattice-usage-migration-test-'));
     db = openDatabase(userDataPath);
-    runMigrations(db, migrations);
+    runMigrations(db, [coreSchemaMigration, usageRecordsMigration]);
   });
 
   afterEach(() => {

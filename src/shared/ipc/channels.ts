@@ -82,6 +82,21 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: attempt to start a connector and report whether it came up healthy. */
   ACP_CONNECTOR_TEST: 'acp:connector-test',
+
+  /** Renderer -> main: list every persisted agent profile. */
+  AGENT_LIST: 'agent:list',
+
+  /** Renderer -> main: create a new agent profile. */
+  AGENT_CREATE: 'agent:create',
+
+  /** Renderer -> main: update fields on an existing agent profile. */
+  AGENT_UPDATE: 'agent:update',
+
+  /** Renderer -> main: duplicate an existing agent profile under a new id. */
+  AGENT_DUPLICATE: 'agent:duplicate',
+
+  /** Renderer -> main: delete an agent profile. */
+  AGENT_DELETE: 'agent:delete',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

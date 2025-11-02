@@ -6,3 +6,4 @@ export {
   type ToolCallRecord,
   type ToolCallStatus,
 } from './toolCallRepository';
+export { AgentProfileRepository, type AgentProfileInput } from './agentProfileRepository';
