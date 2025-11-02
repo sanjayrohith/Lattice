@@ -44,6 +44,21 @@ describe('AgentRunStateMachine', () => {
     expect(machine.current).toBe('streaming');
   });
 
+  it('walks a delegation round trip back into streaming', () => {
+    const machine = new AgentRunStateMachine();
+    machine.transition('streaming');
+    machine.transition('delegating');
+    machine.transition('streaming');
+
+    expect(machine.current).toBe('streaming');
+    expect(machine.isTerminal()).toBe(false);
+  });
+
+  it('rejects delegating directly from idle', () => {
+    const machine = new AgentRunStateMachine();
+    expect(() => machine.transition('delegating')).toThrow(IllegalRunTransitionError);
+  });
+
   it('rejects skipping idle to run a tool directly', () => {
     const machine = new AgentRunStateMachine();
     expect(() => machine.transition('executing-tool')).toThrow(IllegalRunTransitionError);
@@ -62,6 +77,7 @@ describe('AgentRunStateMachine', () => {
       ['streaming'],
       ['streaming', 'executing-tool'],
       ['streaming', 'awaiting-consent'],
+      ['streaming', 'delegating'],
     ];
 
     for (const path of nonTerminalPaths) {
@@ -77,6 +93,7 @@ describe('AgentRunStateMachine', () => {
       ['streaming'],
       ['streaming', 'executing-tool'],
       ['streaming', 'awaiting-consent'],
+      ['streaming', 'delegating'],
     ];
 
     for (const path of nonTerminalPaths) {

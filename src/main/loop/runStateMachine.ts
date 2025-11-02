@@ -3,6 +3,7 @@ export type RunState =
   | 'streaming'
   | 'awaiting-consent'
   | 'executing-tool'
+  | 'delegating'
   | 'completed'
   | 'failed'
   | 'aborted';
@@ -23,15 +24,22 @@ const TERMINAL_STATES: ReadonlySet<RunState> = new Set(['completed', 'failed', '
  *   reinjected as a tool observation and the model gets another turn.
  * - `executing-tool -> streaming`: the tool result is reinjected and the
  *   model gets another turn.
+ * - `streaming -> delegating`: the model called `delegate_to_agent`; the
+ *   primary run suspends while a subordinate agent's own isolated run
+ *   handles the delegated task.
+ * - `delegating -> streaming`: the subordinate's result was captured
+ *   and reinjected as a tool observation; the primary model gets
+ *   another turn.
  * - any non-terminal state `-> failed` / `-> aborted`: an unrecoverable
  *   error, or cancellation, ends the run from wherever it currently is.
  * - `completed` / `failed` / `aborted` are terminal: no further transitions.
  */
 const LEGAL_TRANSITIONS: Record<RunState, ReadonlySet<RunState>> = {
   idle: new Set(['streaming']),
-  streaming: new Set(['executing-tool', 'awaiting-consent', 'completed', 'failed', 'aborted']),
+  streaming: new Set(['executing-tool', 'awaiting-consent', 'delegating', 'completed', 'failed', 'aborted']),
   'awaiting-consent': new Set(['executing-tool', 'streaming', 'failed', 'aborted']),
   'executing-tool': new Set(['streaming', 'failed', 'aborted']),
+  delegating: new Set(['streaming', 'failed', 'aborted']),
   completed: new Set(),
   failed: new Set(),
   aborted: new Set(),

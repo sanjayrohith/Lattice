@@ -33,7 +33,16 @@ export type Settings = z.infer<typeof settingsSchema>;
 export const runSummarySchema = z.object({
   id: z.string(),
   agentId: z.string(),
-  status: z.enum(['idle', 'streaming', 'awaiting-consent', 'executing-tool', 'completed', 'failed', 'aborted']),
+  status: z.enum([
+    'idle',
+    'streaming',
+    'awaiting-consent',
+    'executing-tool',
+    'delegating',
+    'completed',
+    'failed',
+    'aborted',
+  ]),
   startedAt: z.number(),
 });
 export type RunSummary = z.infer<typeof runSummarySchema>;
