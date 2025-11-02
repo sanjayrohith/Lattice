@@ -97,6 +97,9 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: delete an agent profile. */
   AGENT_DELETE: 'agent:delete',
+
+  /** Renderer -> main: fetch the live delegation hierarchy rooted at a given run. */
+  DELEGATION_TREE: 'orchestrator:delegation-tree',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

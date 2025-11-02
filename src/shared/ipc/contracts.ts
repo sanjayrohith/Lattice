@@ -236,6 +236,19 @@ const agentDuplicateResponseSchema = z.object({ agent: agentProfileResponseSchem
 const agentDeleteRequestSchema = z.object({ id: z.string().min(1) });
 const agentDeleteResponseSchema = z.object({ deleted: z.boolean() });
 
+const delegationNodeSchema = z.object({
+  runId: z.string(),
+  parentRunId: z.string().nullable(),
+  agentId: z.string(),
+  status: z.enum(['running', 'completed', 'failed']),
+  startedAt: z.number(),
+  completedAt: z.number().nullable(),
+  totalTokens: z.number().int().nonnegative(),
+});
+
+const delegationTreeRequestSchema = z.object({ rootRunId: z.string().min(1) });
+const delegationTreeResponseSchema = z.object({ nodes: z.array(delegationNodeSchema) });
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -364,6 +377,10 @@ export const ipcContracts = {
   [IPC_CHANNELS.AGENT_DELETE]: {
     request: agentDeleteRequestSchema,
     response: agentDeleteResponseSchema,
+  },
+  [IPC_CHANNELS.DELEGATION_TREE]: {
+    request: delegationTreeRequestSchema,
+    response: delegationTreeResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

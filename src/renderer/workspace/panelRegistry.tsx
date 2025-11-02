@@ -13,6 +13,7 @@ export const PANEL_IDS = {
   INSPECTOR: 'inspector',
   PROVIDER_CREDENTIALS: 'provider-credentials',
   ACP_CONNECTOR_SETTINGS: 'acp-connector-settings',
+  DELEGATION_TREE: 'delegation-tree',
 } as const;
 
 export type PanelId = (typeof PANEL_IDS)[keyof typeof PANEL_IDS];
@@ -44,4 +45,5 @@ export const panelRegistry: Record<PanelId, FunctionComponent<IDockviewPanelProp
   [PANEL_IDS.INSPECTOR]: withSuspense(() => import('../panels/InspectorPanel')),
   [PANEL_IDS.PROVIDER_CREDENTIALS]: withSuspense(() => import('../panels/ProviderCredentialsPanel')),
   [PANEL_IDS.ACP_CONNECTOR_SETTINGS]: withSuspense(() => import('../panels/AcpConnectorSettingsPanel')),
+  [PANEL_IDS.DELEGATION_TREE]: withSuspense(() => import('../panels/DelegationTreePanel')),
 };
