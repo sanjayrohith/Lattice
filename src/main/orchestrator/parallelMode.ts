@@ -1,4 +1,5 @@
 import type { OrchestrationMode, OrchestrationModeRequest, OrchestrationModeResult } from './orchestrationMode';
+import { evaluateParallelCandidates, type CandidateScorer } from './parallelEvaluation';
 
 export interface ParallelCandidate {
   agentId: string;
@@ -19,14 +20,24 @@ export type ParallelAgentRunner = (params: { agentId: string; input: string; sig
  * to every agent in `agentIds` concurrently, each with its own
  * independent `AbortController` so cancelling — or one agent
  * crashing — never touches the others, and aggregates every outcome
- * (success or failure) once all have settled. Selecting a winner among
- * successful candidates is deliberately out of scope here; see
- * `feat(orchestrator): score and select best parallel result`.
+ * (success or failure) once all have settled.
+ *
+ * When constructed with a `scorer`, `summarize` additionally runs the
+ * evaluation stage (`evaluateParallelCandidates`): every successful
+ * candidate is scored against `request.config.criteria` and the
+ * highest-scoring one is auto-selected as the reported output, with
+ * every other successful candidate retained — never discarded — as an
+ * alternate in `details`. With no `scorer` configured, `summarize`
+ * falls back to reporting every candidate's outcome without picking a
+ * winner.
  */
 export class ParallelMode implements OrchestrationMode<string[], ParallelExecuteResult> {
   readonly id = 'parallel';
 
-  constructor(private readonly runAgent: ParallelAgentRunner) {}
+  constructor(
+    private readonly runAgent: ParallelAgentRunner,
+    private readonly scorer?: CandidateScorer,
+  ) {}
 
   plan(request: OrchestrationModeRequest): string[] {
     return [...request.agentIds];
@@ -57,7 +68,20 @@ export class ParallelMode implements OrchestrationMode<string[], ParallelExecute
     return { candidates };
   }
 
-  summarize(_request: OrchestrationModeRequest, executeResult: ParallelExecuteResult): OrchestrationModeResult {
+  async summarize(
+    request: OrchestrationModeRequest,
+    executeResult: ParallelExecuteResult,
+  ): Promise<OrchestrationModeResult> {
+    if (this.scorer) {
+      const criteria = (request.config?.criteria as string[] | undefined) ?? [];
+      const evaluation = await evaluateParallelCandidates(executeResult.candidates, criteria, this.scorer);
+
+      return {
+        output: evaluation.winner ? evaluation.winner.output : 'every candidate failed',
+        details: { ...executeResult, ...evaluation },
+      };
+    }
+
     const succeeded = executeResult.candidates.filter((c) => c.ok);
     const summaryLines = executeResult.candidates.map((c) =>
       c.ok ? `${c.agentId}: ${c.output}` : `${c.agentId}: failed (${c.error})`,

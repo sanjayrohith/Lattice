@@ -71,9 +71,9 @@ describe('ParallelMode.execute', () => {
 });
 
 describe('ParallelMode.summarize', () => {
-  it('joins every successful candidate output with its agent id', () => {
+  it('joins every successful candidate output with its agent id', async () => {
     const mode = new ParallelMode(vi.fn());
-    const result = mode.summarize(baseRequest, {
+    const result = await mode.summarize(baseRequest, {
       candidates: [
         { agentId: 'a', ok: true, output: 'first' },
         { agentId: 'b', ok: true, output: 'second' },
@@ -82,11 +82,28 @@ describe('ParallelMode.summarize', () => {
     expect(result.output).toBe('a: first\nb: second');
   });
 
-  it('reports every candidate failed when none succeeded', () => {
+  it('reports every candidate failed when none succeeded', async () => {
     const mode = new ParallelMode(vi.fn());
-    const result = mode.summarize(baseRequest, {
+    const result = await mode.summarize(baseRequest, {
       candidates: [{ agentId: 'a', ok: false, output: '', error: 'x' }],
     });
     expect(result.output).toBe('every candidate failed');
+  });
+
+  it('auto-selects the highest-scoring candidate as the winner when a scorer is configured', async () => {
+    const scorer = vi.fn((candidate: { agentId: string }) => (candidate.agentId === 'b' ? 10 : 1));
+    const mode = new ParallelMode(vi.fn(), scorer);
+
+    const result = await mode.summarize(baseRequest, {
+      candidates: [
+        { agentId: 'a', ok: true, output: 'weak answer' },
+        { agentId: 'b', ok: true, output: 'strong answer' },
+      ],
+    });
+
+    expect(result.output).toBe('strong answer');
+    expect((result.details as { alternates: { agentId: string }[] }).alternates.map((c) => c.agentId)).toEqual([
+      'a',
+    ]);
   });
 });
