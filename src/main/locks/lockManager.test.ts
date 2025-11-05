@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { LockAlreadyHeldError, LockManager, normalizeLockPath } from './lockManager';
+import { LockAlreadyHeldError, LockManager, describeLockContention, normalizeLockPath } from './lockManager';
 
 describe('normalizeLockPath', () => {
   it('resolves a relative path to an absolute one', () => {
@@ -9,6 +9,25 @@ describe('normalizeLockPath', () => {
 
   it('normalizes two different relative spellings of the same path identically', () => {
     expect(normalizeLockPath('a/../a.txt')).toBe(normalizeLockPath('a.txt'));
+  });
+});
+
+describe('describeLockContention', () => {
+  it('names the holding agent, run, and hold duration, with actionable instructions', () => {
+    const message = describeLockContention('/a.txt', {
+      path: '/a.txt',
+      runId: 'run-1',
+      agentId: 'agent-1',
+      acquiredAt: Date.now() - 5000,
+    });
+
+    expect(message).toContain('agent-1');
+    expect(message).toContain('run-1');
+    expect(message).toContain('/a.txt');
+    expect(message).toMatch(/held for \d+s/);
+    expect(message).toContain('Queue this edit');
+    expect(message).toContain('switch to a');
+    expect(message).toContain('wait and retry');
   });
 });
 
@@ -26,6 +45,23 @@ describe('LockManager.acquire', () => {
     expect(() => manager.acquire('/workspace/a.txt', { runId: 'run-2', agentId: 'agent-2' })).toThrow(
       LockAlreadyHeldError,
     );
+  });
+
+  it('names the holder and offers queue/switch/wait instructions in the error message', () => {
+    const manager = new LockManager();
+    manager.acquire('/workspace/a.txt', { runId: 'run-1', agentId: 'agent-1' });
+
+    try {
+      manager.acquire('/workspace/a.txt', { runId: 'run-2', agentId: 'agent-2' });
+      expect.unreachable('expected acquire to throw');
+    } catch (error) {
+      const message = (error as LockAlreadyHeldError).message;
+      expect(message).toContain('agent-1');
+      expect(message).toContain('run-1');
+      expect(message).toContain('Queue this edit');
+      expect(message).toContain('switch to a');
+      expect(message).toContain('wait and retry');
+    }
   });
 
   it('is idempotent for the same owner re-acquiring the same path', () => {

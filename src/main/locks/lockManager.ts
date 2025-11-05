@@ -10,12 +10,29 @@ export interface LockRecord extends LockOwner {
   acquiredAt: number;
 }
 
+/**
+ * Builds the descriptive, actionable message surfaced to the calling
+ * agent when it loses a lock race: names exactly who holds the lock
+ * and how long they have held it, then spells out the three options
+ * available — queue the edit for later, switch to a different file in
+ * the meantime, or wait and retry — rather than leaving the agent to
+ * guess what a bare "locked" error means for what it should do next.
+ */
+export function describeLockContention(path: string, holder: LockRecord): string {
+  const heldForSeconds = Math.max(0, Math.round((Date.now() - holder.acquiredAt) / 1000));
+  return (
+    `"${path}" is currently locked by agent "${holder.agentId}" (run "${holder.runId}"), ` +
+    `held for ${heldForSeconds}s. Queue this edit for after the lock is released, switch to a ` +
+    `different file in the meantime, or wait and retry.`
+  );
+}
+
 /** Thrown by {@link LockManager.acquire} when the path is already held by a different owner. */
 export class LockAlreadyHeldError extends Error {
   readonly code = 'LOCK_ALREADY_HELD';
 
   constructor(public readonly path: string, public readonly holder: LockRecord) {
-    super(`"${path}" is already locked by agent "${holder.agentId}" (run "${holder.runId}")`);
+    super(describeLockContention(path, holder));
     this.name = 'LockAlreadyHeldError';
   }
 }
