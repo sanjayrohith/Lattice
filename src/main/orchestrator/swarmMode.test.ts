@@ -32,6 +32,7 @@ describe('SwarmMode.execute', () => {
       'architect',
     ]);
     expect(result.turns.map((t) => t.turnIndex)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(result.terminationReason).toBe('round-cap');
   });
 
   it('passes the accumulated transcript so far into each turn', async () => {
@@ -59,6 +60,27 @@ describe('SwarmMode.execute', () => {
     const mode = new SwarmMode(vi.fn());
     const result = await mode.execute({ ...baseRequest, agentIds: [] }, []);
     expect(result.turns).toEqual([]);
+    expect(result.terminationReason).toBe('round-cap');
+  });
+
+  it('stops as soon as the consensus detector reports agreement, before the round cap', async () => {
+    const runTurn: SwarmTurnRunner = vi.fn(async () => 'agreed');
+    const mode = new SwarmMode(runTurn, 10, (transcript) => transcript.length >= 2);
+
+    const result = await mode.execute(baseRequest, mode.plan(baseRequest));
+
+    expect(result.turns).toHaveLength(2);
+    expect(result.terminationReason).toBe('consensus');
+  });
+
+  it('stops on a stall when the same message repeats within the stall window', async () => {
+    const runTurn: SwarmTurnRunner = vi.fn(async () => 'same message every time');
+    const mode = new SwarmMode(runTurn, 20);
+
+    const result = await mode.execute({ ...baseRequest, config: { stallWindow: 3 } }, mode.plan(baseRequest));
+
+    expect(result.turns).toHaveLength(3);
+    expect(result.terminationReason).toBe('stall');
   });
 });
 
@@ -70,12 +92,13 @@ describe('SwarmMode.summarize', () => {
         { turnIndex: 0, agentId: 'project-manager', message: 'kickoff' },
         { turnIndex: 1, agentId: 'architect', message: 'design done' },
       ],
+      terminationReason: 'consensus',
     });
     expect(result.output).toBe('design done');
   });
 
   it('reports an empty string with no turns', () => {
     const mode = new SwarmMode(vi.fn());
-    expect(mode.summarize(baseRequest, { turns: [] }).output).toBe('');
+    expect(mode.summarize(baseRequest, { turns: [], terminationReason: 'round-cap' }).output).toBe('');
   });
 });
