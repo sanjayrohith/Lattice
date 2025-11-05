@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
+import type { LockManager, LockOwner } from '../locks/lockManager';
 import { atomicWriteFile } from '../tools/atomicWrite';
 import { resolveWorkspacePath } from '../tools/pathSandbox';
 import type { AcpConnection } from './acpConnection';
@@ -29,7 +30,17 @@ export const ACP_FS_METHODS = {
  * agent process can never escape the workspace root any more than a
  * local tool call could. Returns the unsubscribe function.
  */
-export function registerAcpFsHandlers(connection: AcpConnection, workspaceRoot: string): () => void {
+export interface AcpFsLockOptions {
+  locks: LockManager;
+  /** Resolves the ACP session id on the write request to the run/agent identity to acquire the lock under. */
+  resolveLockOwner: (sessionId: string) => LockOwner | undefined;
+}
+
+export function registerAcpFsHandlers(
+  connection: AcpConnection,
+  workspaceRoot: string,
+  lockOptions?: AcpFsLockOptions,
+): () => void {
   return connection.onPeerMessage((method, params, respond) => {
     if (!respond) return;
 
@@ -39,7 +50,7 @@ export function registerAcpFsHandlers(connection: AcpConnection, workspaceRoot: 
     }
 
     if (method === ACP_FS_METHODS.WRITE_TEXT_FILE) {
-      void handleWriteTextFile(params, workspaceRoot, respond);
+      void handleWriteTextFile(params, workspaceRoot, respond, lockOptions);
     }
   });
 }
@@ -69,11 +80,24 @@ async function handleWriteTextFile(
   params: unknown,
   workspaceRoot: string,
   respond: (result: unknown) => void,
+  lockOptions?: AcpFsLockOptions,
 ): Promise<void> {
   try {
     const parsed = writeTextFileParamsSchema.parse(params);
     const resolvedPath = resolveWorkspacePath(workspaceRoot, parsed.path);
-    await atomicWriteFile(resolvedPath, parsed.content);
+    const owner = lockOptions?.resolveLockOwner(parsed.sessionId);
+
+    if (lockOptions && owner) {
+      lockOptions.locks.acquire(resolvedPath, owner);
+      try {
+        await atomicWriteFile(resolvedPath, parsed.content);
+      } finally {
+        lockOptions.locks.release(resolvedPath, owner);
+      }
+    } else {
+      await atomicWriteFile(resolvedPath, parsed.content);
+    }
+
     respond({});
   } catch (error) {
     respond(errorResult(error));

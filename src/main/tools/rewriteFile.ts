@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
+import { withFileLock } from '../locks/withFileLock';
 import { atomicWriteFile } from './atomicWrite';
 import { resolveWorkspacePath } from './pathSandbox';
 import { defineTool } from './types';
@@ -44,18 +45,20 @@ export const rewriteFileTool = defineTool({
   execute: async (input, context): Promise<RewriteFileOutput> => {
     const resolvedPath = resolveWorkspacePath(context.workspaceRoot, input.path);
 
-    if (input.startLine === undefined && input.endLine === undefined) {
-      const bytesWritten = await atomicWriteFile(resolvedPath, input.content);
-      return { path: input.path, bytesWritten };
-    }
+    const bytesWritten = await withFileLock(context, resolvedPath, async () => {
+      if (input.startLine === undefined && input.endLine === undefined) {
+        return atomicWriteFile(resolvedPath, input.content);
+      }
 
-    const original = await readFile(resolvedPath, 'utf-8');
-    const lines = original.split('\n');
-    const from = Math.max(1, input.startLine ?? 1);
-    const to = Math.min(lines.length, input.endLine ?? lines.length);
+      const original = await readFile(resolvedPath, 'utf-8');
+      const lines = original.split('\n');
+      const from = Math.max(1, input.startLine ?? 1);
+      const to = Math.min(lines.length, input.endLine ?? lines.length);
 
-    const rewritten = [...lines.slice(0, from - 1), input.content, ...lines.slice(to)].join('\n');
-    const bytesWritten = await atomicWriteFile(resolvedPath, rewritten);
+      const rewritten = [...lines.slice(0, from - 1), input.content, ...lines.slice(to)].join('\n');
+      return atomicWriteFile(resolvedPath, rewritten);
+    });
+
     return { path: input.path, bytesWritten };
   },
 });

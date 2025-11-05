@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { editFileTool, SearchReplaceMismatchError } from './editFile';
 import { WorkspacePathEscapeError } from './pathSandbox';
+import { LockAlreadyHeldError, LockManager } from '../locks/lockManager';
 
 describe('editFileTool', () => {
   let workspaceRoot: string;
@@ -89,5 +90,33 @@ describe('editFileTool', () => {
 
   it('requires consent since it modifies workspace content', () => {
     expect(editFileTool.defaultConsent).toBe('ask');
+  });
+
+  it('rejects with LockAlreadyHeldError when another owner already holds the lock', async () => {
+    writeFileSync(join(workspaceRoot, 'a.txt'), 'const x = 1;');
+    const locks = new LockManager();
+    locks.acquire(join(workspaceRoot, 'a.txt'), { runId: 'other-run', agentId: 'other-agent' });
+
+    await expect(
+      editFileTool.execute(parse({ path: 'a.txt', search: 'const x = 1;', replace: 'x' }), {
+        workspaceRoot,
+        locks,
+        lockOwner: { runId: 'run-1', agentId: 'agent-1' },
+      }),
+    ).rejects.toBeInstanceOf(LockAlreadyHeldError);
+    expect(readFileSync(join(workspaceRoot, 'a.txt'), 'utf-8')).toBe('const x = 1;');
+  });
+
+  it('releases the lock after a successful edit', async () => {
+    writeFileSync(join(workspaceRoot, 'a.txt'), 'const x = 1;');
+    const locks = new LockManager();
+
+    await editFileTool.execute(parse({ path: 'a.txt', search: 'const x = 1;', replace: 'const x = 2;' }), {
+      workspaceRoot,
+      locks,
+      lockOwner: { runId: 'run-1', agentId: 'agent-1' },
+    });
+
+    expect(locks.isLocked(join(workspaceRoot, 'a.txt'))).toBe(false);
   });
 });

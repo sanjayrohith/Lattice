@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { rewriteFileTool } from './rewriteFile';
 import { WorkspacePathEscapeError } from './pathSandbox';
+import { LockAlreadyHeldError, LockManager } from '../locks/lockManager';
 
 describe('rewriteFileTool', () => {
   let workspaceRoot: string;
@@ -82,5 +83,30 @@ describe('rewriteFileTool', () => {
 
   it('requires consent since it modifies workspace content', () => {
     expect(rewriteFileTool.defaultConsent).toBe('ask');
+  });
+
+  it('rejects with LockAlreadyHeldError when another owner already holds the lock', async () => {
+    const locks = new LockManager();
+    locks.acquire(join(workspaceRoot, 'a.txt'), { runId: 'other-run', agentId: 'other-agent' });
+
+    await expect(
+      rewriteFileTool.execute(parse({ path: 'a.txt', content: 'x' }), {
+        workspaceRoot,
+        locks,
+        lockOwner: { runId: 'run-1', agentId: 'agent-1' },
+      }),
+    ).rejects.toBeInstanceOf(LockAlreadyHeldError);
+  });
+
+  it('releases the lock after a successful whole-file rewrite', async () => {
+    const locks = new LockManager();
+
+    await rewriteFileTool.execute(parse({ path: 'a.txt', content: 'x' }), {
+      workspaceRoot,
+      locks,
+      lockOwner: { runId: 'run-1', agentId: 'agent-1' },
+    });
+
+    expect(locks.isLocked(join(workspaceRoot, 'a.txt'))).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
+import { withFileLock } from '../locks/withFileLock';
 import { atomicWriteFile } from './atomicWrite';
 import { resolveWorkspacePath } from './pathSandbox';
 import { defineTool } from './types';
@@ -61,15 +62,19 @@ export const editFileTool = defineTool({
   defaultConsent: 'ask',
   execute: async (input, context): Promise<EditFileOutput> => {
     const resolvedPath = resolveWorkspacePath(context.workspaceRoot, input.path);
-    const original = await readFile(resolvedPath, 'utf-8');
 
-    const occurrences = countOccurrences(original, input.search);
-    if (occurrences !== 1) {
-      throw new SearchReplaceMismatchError(input.path, occurrences);
-    }
+    const bytesWritten = await withFileLock(context, resolvedPath, async () => {
+      const original = await readFile(resolvedPath, 'utf-8');
 
-    const updated = original.replace(input.search, input.replace);
-    const bytesWritten = await atomicWriteFile(resolvedPath, updated);
+      const occurrences = countOccurrences(original, input.search);
+      if (occurrences !== 1) {
+        throw new SearchReplaceMismatchError(input.path, occurrences);
+      }
+
+      const updated = original.replace(input.search, input.replace);
+      return atomicWriteFile(resolvedPath, updated);
+    });
+
     return { path: input.path, bytesWritten };
   },
 });

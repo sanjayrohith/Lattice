@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AcpConnection } from './acpConnection';
 import { ACP_FS_METHODS, registerAcpFsHandlers } from './acpFsMethods';
 import { WorkspacePathEscapeError } from '../tools/pathSandbox';
+import { LockManager } from '../locks/lockManager';
 
 describe('registerAcpFsHandlers', () => {
   let workspaceRoot: string;
@@ -66,5 +67,31 @@ describe('registerAcpFsHandlers', () => {
   it('ignores unrelated methods and notifications with no respond callback', () => {
     const { connection } = fakeConnection();
     expect(() => registerAcpFsHandlers(connection, workspaceRoot)).not.toThrow();
+  });
+
+  it('acquires and releases a lock around a write when lock options are provided', async () => {
+    const locks = new LockManager();
+    const { connection, invoke } = fakeConnection();
+    registerAcpFsHandlers(connection, workspaceRoot, {
+      locks,
+      resolveLockOwner: (sessionId) => ({ runId: sessionId, agentId: 'acp-agent' }),
+    });
+
+    await invoke(ACP_FS_METHODS.WRITE_TEXT_FILE, { sessionId: 'sess-1', path: 'a.txt', content: 'x' });
+
+    expect(locks.isLocked(join(workspaceRoot, 'a.txt'))).toBe(false);
+  });
+
+  it('returns a structured error when another owner already holds the lock', async () => {
+    const locks = new LockManager();
+    locks.acquire(join(workspaceRoot, 'a.txt'), { runId: 'other-run', agentId: 'other-agent' });
+    const { connection, invoke } = fakeConnection();
+    registerAcpFsHandlers(connection, workspaceRoot, {
+      locks,
+      resolveLockOwner: () => ({ runId: 'sess-1', agentId: 'acp-agent' }),
+    });
+
+    const result = await invoke(ACP_FS_METHODS.WRITE_TEXT_FILE, { sessionId: 'sess-1', path: 'a.txt', content: 'x' });
+    expect(result).toMatchObject({ error: { code: 'LOCK_ALREADY_HELD' } });
   });
 });

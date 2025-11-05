@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { writeFileTool } from './writeFile';
 import { WorkspacePathEscapeError } from './pathSandbox';
+import { LockAlreadyHeldError, LockManager } from '../locks/lockManager';
 
 describe('writeFileTool', () => {
   let workspaceRoot: string;
@@ -69,5 +70,32 @@ describe('writeFileTool', () => {
 
   it('requires consent since it can create or overwrite content', () => {
     expect(writeFileTool.defaultConsent).toBe('ask');
+  });
+
+  it('acquires and releases a lock around the write when a lock manager is provided', async () => {
+    const locks = new LockManager();
+    const lockOwner = { runId: 'run-1', agentId: 'agent-1' };
+
+    await writeFileTool.execute(parse({ path: 'a.txt', content: 'hello' }), {
+      workspaceRoot,
+      locks,
+      lockOwner,
+    });
+
+    expect(locks.isLocked(join(workspaceRoot, 'a.txt'))).toBe(false);
+  });
+
+  it('rejects with LockAlreadyHeldError when another owner already holds the lock', async () => {
+    const locks = new LockManager();
+    locks.acquire(join(workspaceRoot, 'a.txt'), { runId: 'other-run', agentId: 'other-agent' });
+
+    await expect(
+      writeFileTool.execute(parse({ path: 'a.txt', content: 'hello' }), {
+        workspaceRoot,
+        locks,
+        lockOwner: { runId: 'run-1', agentId: 'agent-1' },
+      }),
+    ).rejects.toBeInstanceOf(LockAlreadyHeldError);
+    expect(existsSync(join(workspaceRoot, 'a.txt'))).toBe(false);
   });
 });

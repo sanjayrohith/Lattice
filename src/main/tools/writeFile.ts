@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { withFileLock } from '../locks/withFileLock';
 import { atomicWriteFile } from './atomicWrite';
 import { resolveWorkspacePath } from './pathSandbox';
 import { defineTool } from './types';
@@ -28,7 +29,9 @@ export const writeFileTool = defineTool({
   defaultConsent: 'ask',
   execute: async (input, context): Promise<WriteFileOutput> => {
     const resolvedPath = resolveWorkspacePath(context.workspaceRoot, input.path);
-    const bytesWritten = await atomicWriteFile(resolvedPath, input.content);
+    const bytesWritten = await withFileLock(context, resolvedPath, () =>
+      atomicWriteFile(resolvedPath, input.content),
+    );
     return { path: input.path, bytesWritten };
   },
 });

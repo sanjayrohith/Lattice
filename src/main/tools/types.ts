@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { LockManager, LockOwner } from '../locks/lockManager';
 
 /**
  * How a tool call is authorized before it runs:
@@ -23,6 +24,16 @@ export interface ToolExecutionContext {
   signal?: AbortSignal;
   /** Called with each incremental chunk a streaming tool (e.g. `run_command`) produces, in order. */
   onOutput?: (chunk: ToolOutputChunk) => void;
+  /**
+   * The centralized lock manager write-capable tools must acquire an
+   * exclusive lock through before touching disk. Omitted entirely in
+   * contexts that never run write-capable tools concurrently (e.g.
+   * most unit tests), in which case those tools skip locking rather
+   * than failing on a manager they were never given.
+   */
+  locks?: LockManager;
+  /** The run and agent identity to acquire locks under; required whenever `locks` is provided. */
+  lockOwner?: LockOwner;
 }
 
 /**
