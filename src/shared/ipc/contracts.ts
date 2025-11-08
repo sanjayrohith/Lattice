@@ -249,6 +249,19 @@ const delegationNodeSchema = z.object({
 const delegationTreeRequestSchema = z.object({ rootRunId: z.string().min(1) });
 const delegationTreeResponseSchema = z.object({ nodes: z.array(delegationNodeSchema) });
 
+const lockRecordSchema = z.object({
+  path: z.string(),
+  runId: z.string(),
+  agentId: z.string(),
+  acquiredAt: z.number(),
+});
+
+const locksListRequestSchema = z.void();
+const locksListResponseSchema = z.object({ locks: z.array(lockRecordSchema) });
+
+const locksForceReleaseRequestSchema = z.object({ path: z.string().min(1) });
+const locksForceReleaseResponseSchema = z.object({ released: z.boolean() });
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -381,6 +394,14 @@ export const ipcContracts = {
   [IPC_CHANNELS.DELEGATION_TREE]: {
     request: delegationTreeRequestSchema,
     response: delegationTreeResponseSchema,
+  },
+  [IPC_CHANNELS.LOCKS_LIST]: {
+    request: locksListRequestSchema,
+    response: locksListResponseSchema,
+  },
+  [IPC_CHANNELS.LOCKS_FORCE_RELEASE]: {
+    request: locksForceReleaseRequestSchema,
+    response: locksForceReleaseResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

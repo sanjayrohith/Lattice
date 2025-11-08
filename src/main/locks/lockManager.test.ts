@@ -101,6 +101,20 @@ describe('LockManager.release', () => {
   });
 });
 
+describe('LockManager.forceRelease', () => {
+  it('releases a lock regardless of who holds it', () => {
+    const manager = new LockManager();
+    manager.acquire('/a.txt', { runId: 'run-1', agentId: 'agent-1' });
+    expect(manager.forceRelease('/a.txt')).toBe(true);
+    expect(manager.isLocked('/a.txt')).toBe(false);
+  });
+
+  it('returns false for a path with no lock', () => {
+    const manager = new LockManager();
+    expect(manager.forceRelease('/missing.txt')).toBe(false);
+  });
+});
+
 describe('LockManager.listLocks / getLock', () => {
   it('lists every currently held lock', () => {
     const manager = new LockManager();

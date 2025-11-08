@@ -83,6 +83,11 @@ export class LockManager {
     return true;
   }
 
+  /** Releases the lock on `path` unconditionally, regardless of who holds it. For manual operator intervention only. */
+  forceRelease(path: string): boolean {
+    return this.locksByPath.delete(normalizeLockPath(path));
+  }
+
   isLocked(path: string): boolean {
     return this.locksByPath.has(normalizeLockPath(path));
   }

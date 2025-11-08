@@ -100,6 +100,12 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: fetch the live delegation hierarchy rooted at a given run. */
   DELEGATION_TREE: 'orchestrator:delegation-tree',
+
+  /** Renderer -> main: list every currently held file lock. */
+  LOCKS_LIST: 'locks:list',
+
+  /** Renderer -> main: manually force-release a held lock, bypassing its owner. */
+  LOCKS_FORCE_RELEASE: 'locks:force-release',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
