@@ -2,9 +2,16 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolveWorkspacePath } from '../tools/pathSandbox';
 
-/** A content-hash snapshot of one file at the moment a multi-agent run began touching it. */
+/**
+ * A snapshot of one file at the moment a multi-agent run began
+ * touching it: its full content, retained so a later "Revert" action
+ * has something to actually restore to, and a content hash of that
+ * same content, retained separately so a cheap equality check (hash
+ * comparison) never has to re-hash on every detection pass.
+ */
 export interface FileSnapshot {
   path: string;
+  content: string;
   contentHash: string;
 }
 
@@ -50,7 +57,7 @@ export async function captureDriftBaseline(
   for (const path of filePaths) {
     const resolvedPath = resolveWorkspacePath(workspaceRoot, path);
     const content = await readFile(resolvedPath, 'utf-8').catch(() => '');
-    files.push({ path, contentHash: hashContent(content) });
+    files.push({ path, content, contentHash: hashContent(content) });
   }
 
   return { runId, specification, capturedAt: Date.now(), files };
@@ -74,17 +81,18 @@ export class DriftBaselineStore {
     return this.baselinesByRunId.get(runId);
   }
 
-  /** Rebases one file's recorded hash in `runId`'s baseline, e.g. after an operator accepts a divergence. */
-  updateFileHash(runId: string, path: string, contentHash: string): void {
+  /** Rebases one file's recorded snapshot in `runId`'s baseline, e.g. after an operator accepts a divergence. */
+  updateFileSnapshot(runId: string, path: string, content: string): void {
     const baseline = this.baselinesByRunId.get(runId);
     if (!baseline) return;
 
+    const snapshot: FileSnapshot = { path, content, contentHash: hashContent(content) };
     const existingIndex = baseline.files.findIndex((file) => file.path === path);
     if (existingIndex === -1) {
-      baseline.files.push({ path, contentHash });
+      baseline.files.push(snapshot);
       return;
     }
-    baseline.files[existingIndex] = { path, contentHash };
+    baseline.files[existingIndex] = snapshot;
   }
 
   release(runId: string): void {

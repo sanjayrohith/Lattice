@@ -34,14 +34,14 @@ describe('captureDriftBaseline', () => {
     expect(baseline.runId).toBe('run-1');
     expect(baseline.specification).toBe('add a greeting');
     expect(baseline.files).toEqual([
-      { path: 'a.txt', contentHash: hashContent('hello') },
-      { path: 'b.txt', contentHash: hashContent('world') },
+      { path: 'a.txt', content: 'hello', contentHash: hashContent('hello') },
+      { path: 'b.txt', content: 'world', contentHash: hashContent('world') },
     ]);
   });
 
-  it('records a not-yet-existing file with the empty-content hash rather than skipping it', async () => {
+  it('records a not-yet-existing file with empty content rather than skipping it', async () => {
     const baseline = await captureDriftBaseline('run-1', 'create a file', workspaceRoot, ['new.txt']);
-    expect(baseline.files).toEqual([{ path: 'new.txt', contentHash: hashContent('') }]);
+    expect(baseline.files).toEqual([{ path: 'new.txt', content: '', contentHash: hashContent('') }]);
   });
 
   it('captures nothing for an empty file list', async () => {
@@ -62,25 +62,32 @@ describe('DriftBaselineStore', () => {
     expect(store.get('missing')).toBeUndefined();
   });
 
-  it('updateFileHash rebases an existing file entry', () => {
+  it('updateFileSnapshot rebases an existing file entry to new content and its hash', () => {
     const store = new DriftBaselineStore();
-    store.set({ runId: 'run-1', specification: 'x', capturedAt: 0, files: [{ path: 'a.txt', contentHash: 'old' }] });
+    store.set({
+      runId: 'run-1',
+      specification: 'x',
+      capturedAt: 0,
+      files: [{ path: 'a.txt', content: 'old', contentHash: hashContent('old') }],
+    });
 
-    store.updateFileHash('run-1', 'a.txt', 'new');
-    expect(store.get('run-1')?.files).toEqual([{ path: 'a.txt', contentHash: 'new' }]);
+    store.updateFileSnapshot('run-1', 'a.txt', 'new');
+    expect(store.get('run-1')?.files).toEqual([{ path: 'a.txt', content: 'new', contentHash: hashContent('new') }]);
   });
 
-  it('updateFileHash adds a new entry for a path not yet in the baseline', () => {
+  it('updateFileSnapshot adds a new entry for a path not yet in the baseline', () => {
     const store = new DriftBaselineStore();
     store.set({ runId: 'run-1', specification: 'x', capturedAt: 0, files: [] });
 
-    store.updateFileHash('run-1', 'b.txt', 'hash-b');
-    expect(store.get('run-1')?.files).toEqual([{ path: 'b.txt', contentHash: 'hash-b' }]);
+    store.updateFileSnapshot('run-1', 'b.txt', 'content-b');
+    expect(store.get('run-1')?.files).toEqual([
+      { path: 'b.txt', content: 'content-b', contentHash: hashContent('content-b') },
+    ]);
   });
 
-  it('updateFileHash is a no-op for an unknown run id', () => {
+  it('updateFileSnapshot is a no-op for an unknown run id', () => {
     const store = new DriftBaselineStore();
-    expect(() => store.updateFileHash('missing', 'a.txt', 'hash')).not.toThrow();
+    expect(() => store.updateFileSnapshot('missing', 'a.txt', 'content')).not.toThrow();
   });
 
   it('release removes the stored baseline', () => {
