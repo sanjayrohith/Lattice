@@ -262,6 +262,23 @@ const locksListResponseSchema = z.object({ locks: z.array(lockRecordSchema) });
 const locksForceReleaseRequestSchema = z.object({ path: z.string().min(1) });
 const locksForceReleaseResponseSchema = z.object({ released: z.boolean() });
 
+const driftSignalSchema = z.object({
+  path: z.string(),
+  diverged: z.boolean(),
+  score: z.number(),
+  baselineContent: z.string(),
+  currentContent: z.string(),
+});
+
+const driftSignalsRequestSchema = z.object({ runId: z.string().min(1) });
+const driftSignalsResponseSchema = z.object({ signals: z.array(driftSignalSchema) });
+
+const driftAcceptRequestSchema = z.object({ runId: z.string().min(1), path: z.string().min(1) });
+const driftAcceptResponseSchema = z.object({ accepted: z.boolean() });
+
+const driftRevertRequestSchema = z.object({ runId: z.string().min(1), path: z.string().min(1) });
+const driftRevertResponseSchema = z.object({ reverted: z.boolean() });
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -402,6 +419,18 @@ export const ipcContracts = {
   [IPC_CHANNELS.LOCKS_FORCE_RELEASE]: {
     request: locksForceReleaseRequestSchema,
     response: locksForceReleaseResponseSchema,
+  },
+  [IPC_CHANNELS.DRIFT_SIGNALS]: {
+    request: driftSignalsRequestSchema,
+    response: driftSignalsResponseSchema,
+  },
+  [IPC_CHANNELS.DRIFT_ACCEPT]: {
+    request: driftAcceptRequestSchema,
+    response: driftAcceptResponseSchema,
+  },
+  [IPC_CHANNELS.DRIFT_REVERT]: {
+    request: driftRevertRequestSchema,
+    response: driftRevertResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

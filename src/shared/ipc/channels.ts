@@ -106,6 +106,15 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: manually force-release a held lock, bypassing its owner. */
   LOCKS_FORCE_RELEASE: 'locks:force-release',
+
+  /** Renderer -> main: fetch the latest drift divergence signals for a run. */
+  DRIFT_SIGNALS: 'drift:signals',
+
+  /** Renderer -> main: accept a diverged file's current content, rebasing the baseline to it. */
+  DRIFT_ACCEPT: 'drift:accept',
+
+  /** Renderer -> main: revert a diverged file back to its baseline content on disk. */
+  DRIFT_REVERT: 'drift:revert',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
