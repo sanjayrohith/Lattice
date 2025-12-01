@@ -31,6 +31,16 @@ describe('initializeDatabase', () => {
 
     expect(tables).toEqual([
       'agent_profiles',
+      'kg_chunks',
+      'kg_chunks_fts',
+      'kg_chunks_fts_config',
+      'kg_chunks_fts_content',
+      'kg_chunks_fts_data',
+      'kg_chunks_fts_docsize',
+      'kg_chunks_fts_idx',
+      'kg_edges',
+      'kg_embeddings',
+      'kg_nodes',
       'messages',
       'sessions',
       'settings',
