@@ -17,6 +17,7 @@ export const PANEL_IDS = {
   ORCHESTRATION_MODE_SELECTOR: 'orchestration-mode-selector',
   LOCKS_INSPECTOR: 'locks-inspector',
   DRIFT_ALERTS: 'drift-alerts',
+  MEMORY_INSPECTOR: 'memory-inspector',
 } as const;
 
 export type PanelId = (typeof PANEL_IDS)[keyof typeof PANEL_IDS];
@@ -52,4 +53,5 @@ export const panelRegistry: Record<PanelId, FunctionComponent<IDockviewPanelProp
   [PANEL_IDS.ORCHESTRATION_MODE_SELECTOR]: withSuspense(() => import('../panels/OrchestrationModeSelectorPanel')),
   [PANEL_IDS.LOCKS_INSPECTOR]: withSuspense(() => import('../panels/LocksInspectorPanel')),
   [PANEL_IDS.DRIFT_ALERTS]: withSuspense(() => import('../panels/DriftAlertsPanel')),
+  [PANEL_IDS.MEMORY_INSPECTOR]: withSuspense(() => import('../panels/MemoryInspectorPanel')),
 };

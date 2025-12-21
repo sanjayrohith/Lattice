@@ -115,6 +115,12 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: revert a diverged file back to its baseline content on disk. */
   DRIFT_REVERT: 'drift:revert',
+
+  /** Renderer -> main: run a manual hybrid search over the indexed workspace memory. */
+  MEMORY_SEARCH: 'memory:search',
+
+  /** Renderer -> main: trigger a full reindex of the workspace into memory. */
+  MEMORY_REINDEX: 'memory:reindex',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

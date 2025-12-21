@@ -279,6 +279,20 @@ const driftAcceptResponseSchema = z.object({ accepted: z.boolean() });
 const driftRevertRequestSchema = z.object({ runId: z.string().min(1), path: z.string().min(1) });
 const driftRevertResponseSchema = z.object({ reverted: z.boolean() });
 
+const memorySearchChunkSchema = z.object({
+  chunkId: z.string(),
+  filePath: z.string(),
+  startLine: z.number(),
+  endLine: z.number(),
+  content: z.string(),
+  score: z.number().nullable(),
+});
+const memorySearchRequestSchema = z.object({ query: z.string().min(1), limit: z.number().int().positive().max(50).optional() });
+const memorySearchResponseSchema = z.object({ results: z.array(memorySearchChunkSchema) });
+
+const memoryReindexRequestSchema = z.void();
+const memoryReindexResponseSchema = z.object({ reindexed: z.boolean(), changedFiles: z.number() });
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -431,6 +445,14 @@ export const ipcContracts = {
   [IPC_CHANNELS.DRIFT_REVERT]: {
     request: driftRevertRequestSchema,
     response: driftRevertResponseSchema,
+  },
+  [IPC_CHANNELS.MEMORY_SEARCH]: {
+    request: memorySearchRequestSchema,
+    response: memorySearchResponseSchema,
+  },
+  [IPC_CHANNELS.MEMORY_REINDEX]: {
+    request: memoryReindexRequestSchema,
+    response: memoryReindexResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

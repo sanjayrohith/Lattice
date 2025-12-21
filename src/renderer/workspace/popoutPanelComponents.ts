@@ -18,6 +18,7 @@ export const popoutPanelComponents: Record<PanelId, ComponentType> = {
   [PANEL_IDS.ORCHESTRATION_MODE_SELECTOR]: lazy(() => import('../panels/OrchestrationModeSelectorPanel')),
   [PANEL_IDS.LOCKS_INSPECTOR]: lazy(() => import('../panels/LocksInspectorPanel')),
   [PANEL_IDS.DRIFT_ALERTS]: lazy(() => import('../panels/DriftAlertsPanel')),
+  [PANEL_IDS.MEMORY_INSPECTOR]: lazy(() => import('../panels/MemoryInspectorPanel')),
 };
 
 export function isPanelId(value: string): value is PanelId {
