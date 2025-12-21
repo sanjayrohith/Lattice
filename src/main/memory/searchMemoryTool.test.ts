@@ -5,6 +5,7 @@ import { migrations } from '../db/migrations';
 import { EmbeddingRepository } from './embeddingRepository';
 import { LocalHashingEmbeddingProvider } from './embeddingProvider';
 import { createSearchMemoryTool } from './searchMemoryTool';
+import { SeenRangeTracker } from './seenRangeTracker';
 import type { ToolExecutionContext } from '../tools/types';
 
 describe('createSearchMemoryTool', () => {
@@ -53,6 +54,15 @@ describe('createSearchMemoryTool', () => {
       context,
     );
     expect(result.results.map((r) => r.filePath)).not.toContain('src/pathSandbox.ts');
+  });
+
+  it('marks returned chunks as seen when a seenRanges tracker is provided', async () => {
+    const tool = createSearchMemoryTool(db, provider);
+    const seenRanges = new SeenRangeTracker();
+
+    await tool.execute({ query: 'resolveWorkspacePath', limit: 10, expandGraph: true }, { ...context, seenRanges });
+
+    expect(seenRanges.isFullyCovered('src/pathSandbox.ts', { startLine: 1, endLine: 5 })).toBe(true);
   });
 
   it('returns no results for an unindexed workspace', async () => {

@@ -12,6 +12,7 @@ import {
   retrieveMemoryContext,
   type MemoryContextChunk,
 } from './contextInjection';
+import { SeenRangeTracker } from './seenRangeTracker';
 
 describe('estimateTokenCount', () => {
   it('estimates roughly one token per four characters', () => {
@@ -98,5 +99,23 @@ describe('retrieveMemoryContext / injectRetrievedContext', () => {
     runMigrations(emptyDb, migrations);
     const result = await injectRetrievedContext(emptyDb, provider, 'anything', 'base prompt', 1000);
     expect(result).toBe('base prompt');
+  });
+
+  it('skips a chunk the seen tracker already reports as covered', async () => {
+    const tracker = new SeenRangeTracker();
+    tracker.markSeen('src/pathSandbox.ts', { startLine: 1, endLine: 5 });
+
+    const chunks = await retrieveMemoryContext(db, provider, 'resolveWorkspacePath', 10, tracker);
+    expect(chunks).toEqual([]);
+  });
+
+  it('marks injected chunks as seen so a second call for the same task injects nothing more', async () => {
+    const tracker = new SeenRangeTracker();
+
+    const first = await injectRetrievedContext(db, provider, 'resolveWorkspacePath', 'base prompt', 1000, tracker);
+    expect(first).toContain('src/pathSandbox.ts');
+
+    const second = await injectRetrievedContext(db, provider, 'resolveWorkspacePath', 'base prompt', 1000, tracker);
+    expect(second).toBe('base prompt');
   });
 });

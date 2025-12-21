@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { detectEncoding, READ_FILE_MAX_BYTES, readFileTool } from './readFile';
 import { WorkspacePathEscapeError } from './pathSandbox';
+import { SeenRangeTracker } from '../memory/seenRangeTracker';
 
 describe('detectEncoding', () => {
   it('detects plain ascii text as utf-8', () => {
@@ -108,5 +109,18 @@ describe('readFileTool', () => {
 
   it('rejects an empty path at the schema level', () => {
     expect(() => readFileTool.inputSchema.parse({ path: '' })).toThrow();
+  });
+
+  it('marks the read range as seen when a seenRanges tracker is provided', async () => {
+    writeFileSync(join(workspaceRoot, 'a.txt'), 'one\ntwo\nthree\nfour\nfive');
+    const seenRanges = new SeenRangeTracker();
+
+    await readFileTool.execute(readFileTool.inputSchema.parse({ path: 'a.txt', startLine: 2, endLine: 4 }), {
+      workspaceRoot,
+      seenRanges,
+    });
+
+    expect(seenRanges.isFullyCovered('a.txt', { startLine: 2, endLine: 4 })).toBe(true);
+    expect(seenRanges.isFullyCovered('a.txt', { startLine: 1, endLine: 5 })).toBe(false);
   });
 });

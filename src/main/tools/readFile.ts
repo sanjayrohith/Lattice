@@ -89,6 +89,12 @@ export const readFileTool = defineTool({
 
     const text = stripBom(limited.toString('utf-8'));
     const { content, totalLines } = selectLineRange(text, input.startLine, input.endLine);
+
+    context.seenRanges?.markSeen(input.path, {
+      startLine: input.startLine ?? 1,
+      endLine: input.endLine ?? totalLines,
+    });
+
     return { content, encoding, truncated, totalLines };
   },
 });

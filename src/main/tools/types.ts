@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { LockManager, LockOwner } from '../locks/lockManager';
+import type { SeenRangeTracker } from '../memory/seenRangeTracker';
 
 /**
  * How a tool call is authorized before it runs:
@@ -34,6 +35,14 @@ export interface ToolExecutionContext {
   locks?: LockManager;
   /** The run and agent identity to acquire locks under; required whenever `locks` is provided. */
   lockOwner?: LockOwner;
+  /**
+   * Records which file/line ranges the run has already placed in front of
+   * the model, so per-turn memory retrieval (`injectRetrievedContext`)
+   * never spends the token budget re-injecting content a tool already
+   * surfaced. Omitted in contexts with no memory subsystem wired up (e.g.
+   * most unit tests), in which case content-bearing tools skip tracking.
+   */
+  seenRanges?: SeenRangeTracker;
 }
 
 /**

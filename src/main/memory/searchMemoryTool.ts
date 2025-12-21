@@ -59,7 +59,7 @@ export function createSearchMemoryTool(
     description: 'runs hybrid keyword and semantic search over the indexed workspace and returns ranked chunks',
     inputSchema: searchMemoryInputSchema,
     defaultConsent: 'always',
-    execute: async (input): Promise<SearchMemoryOutput> => {
+    execute: async (input, context): Promise<SearchMemoryOutput> => {
       const [queryVector] = await embeddingProvider.embed([input.query]);
 
       const fused = hybridSearch(db, embeddingProvider.id, input.query, queryVector ?? [], {
@@ -89,6 +89,7 @@ export function createSearchMemoryTool(
         const row = rowById.get(chunkId);
         if (!row) continue;
         if (input.filePathPrefix && !row.file_path.startsWith(input.filePathPrefix)) continue;
+        context.seenRanges?.markSeen(row.file_path, { startLine: row.start_line, endLine: row.end_line });
         results.push({
           chunkId: row.id,
           filePath: row.file_path,
