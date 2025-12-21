@@ -7,3 +7,4 @@ export {
   type ToolCallStatus,
 } from './toolCallRepository';
 export { AgentProfileRepository, type AgentProfileInput } from './agentProfileRepository';
+export { McpServerRepository, type McpServerConfigInput } from './mcpServerRepository';

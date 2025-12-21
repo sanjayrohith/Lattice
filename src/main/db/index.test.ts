@@ -41,6 +41,7 @@ describe('initializeDatabase', () => {
       'kg_edges',
       'kg_embeddings',
       'kg_nodes',
+      'mcp_servers',
       'messages',
       'sessions',
       'settings',
