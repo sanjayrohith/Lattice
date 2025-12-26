@@ -7,8 +7,17 @@ export interface McpToolDescriptor {
   inputSchema: unknown;
 }
 
+export interface McpRequestOptions {
+  /** Milliseconds to wait before aborting this request; the SDK default (60s) applies when omitted. */
+  timeoutMs?: number;
+}
+
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function toRequestOptions(options: McpRequestOptions): { timeout?: number } | undefined {
+  return options.timeoutMs !== undefined ? { timeout: options.timeoutMs } : undefined;
 }
 
 /** Thrown by {@link McpClient.connect} when the transport handshake fails. */
@@ -70,10 +79,10 @@ export class McpClient {
     this.client = client;
   }
 
-  async listTools(): Promise<McpToolDescriptor[]> {
+  async listTools(options: McpRequestOptions = {}): Promise<McpToolDescriptor[]> {
     const client = this.requireClient();
     try {
-      const result = await client.listTools();
+      const result = await client.listTools(undefined, toRequestOptions(options));
       return result.tools.map((tool) => ({
         name: tool.name,
         description: tool.description ?? '',
@@ -84,11 +93,15 @@ export class McpClient {
     }
   }
 
-  async callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+  async callTool(
+    name: string,
+    args: Record<string, unknown>,
+    options: McpRequestOptions = {},
+  ): Promise<unknown> {
     const client = this.requireClient();
     let result: Awaited<ReturnType<SdkClient['callTool']>>;
     try {
-      result = await client.callTool({ name, arguments: args });
+      result = await client.callTool({ name, arguments: args }, undefined, toRequestOptions(options));
     } catch (error) {
       throw new McpToolCallError(name, error);
     }
