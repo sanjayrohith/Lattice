@@ -1,5 +1,12 @@
 import type { AnyTool, ConsentPolicy } from '../tools/types';
 import { defineTool } from '../tools/types';
+import {
+  DEFAULT_MCP_CALL_TIMEOUT_MS,
+  isolateMcpServerFailure,
+  noopMcpLogger,
+  withTimeout,
+  type McpLogger,
+} from './mcpFaultIsolation';
 import { jsonSchemaToZod, type JsonSchema } from './jsonSchemaToZod';
 import type { McpClient, McpToolDescriptor } from './mcpClient';
 import type { McpServerConfig } from './mcpServerConfig';
@@ -12,27 +19,45 @@ export interface McpDiscoveredTool {
 /** Resolves a connected server's id to its {@link McpClient}, or `undefined` if it isn't connected. */
 export type McpClientLookup = (serverId: string) => McpClient | undefined;
 
+export interface DiscoverMcpToolsOptions {
+  timeoutMs?: number;
+  logger?: McpLogger;
+}
+
 /**
  * Queries every enabled, connected MCP server for its current tool
  * definitions. Called at the start of each agent turn — an MCP server's
  * tool list is not assumed static (`feat(mcp): cache tool discovery with
  * invalidation` is what makes that affordable per turn). A disabled
  * server, or one with no connected client, contributes nothing rather
- * than failing the discovery pass.
+ * than failing the discovery pass. Each server's discovery call is
+ * independently isolated via {@link isolateMcpServerFailure}: a server
+ * that hangs, crashes, or returns a malformed response is logged and
+ * skipped rather than failing every other server's discovery — or the
+ * agent turn itself.
  */
 export async function discoverMcpTools(
   servers: readonly McpServerConfig[],
   getClient: McpClientLookup,
+  options: DiscoverMcpToolsOptions = {},
 ): Promise<McpDiscoveredTool[]> {
   const enabledServers = servers.filter((server) => server.enabled);
 
   const perServer = await Promise.all(
-    enabledServers.map(async (server): Promise<McpDiscoveredTool[]> => {
+    enabledServers.map((server): Promise<McpDiscoveredTool[]> => {
       const client = getClient(server.id);
-      if (!client?.connected) return [];
+      if (!client?.connected) return Promise.resolve([]);
 
-      const descriptors = await client.listTools();
-      return descriptors.map((descriptor) => ({ serverId: server.id, descriptor }));
+      return isolateMcpServerFailure(
+        server.id,
+        'tool discovery',
+        async () => {
+          const descriptors = await client.listTools();
+          return descriptors.map((descriptor) => ({ serverId: server.id, descriptor }));
+        },
+        [],
+        options,
+      );
     }),
   );
 
@@ -72,6 +97,9 @@ export interface ToMcpAnyToolOptions {
   existingNames?: ReadonlySet<string>;
   /** Namespaced tool names (see {@link namespaceMcpToolName}) the user has explicitly allowlisted to run without prompting. */
   consentAllowlist?: ReadonlySet<string>;
+  /** Milliseconds before an invocation is abandoned as hung; forwarded to {@link isolateMcpServerFailure}'s default. */
+  callTimeoutMs?: number;
+  logger?: McpLogger;
 }
 
 /**
@@ -109,7 +137,22 @@ export function toMcpAnyTool(
       if (!client) {
         throw new Error(`mcp server "${discovered.serverId}" is not connected`);
       }
-      return client.callTool(discovered.descriptor.name, input as Record<string, unknown>);
+
+      const timeoutMs = options.callTimeoutMs ?? DEFAULT_MCP_CALL_TIMEOUT_MS;
+      try {
+        return await withTimeout(
+          client.callTool(discovered.descriptor.name, input as Record<string, unknown>),
+          timeoutMs,
+          `mcp server "${discovered.serverId}" tool "${discovered.descriptor.name}" call timed out after ${timeoutMs}ms`,
+        );
+      } catch (error) {
+        (options.logger ?? noopMcpLogger).warn(
+          `mcp server "${discovered.serverId}" tool "${discovered.descriptor.name}" call failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+        throw error;
+      }
     },
   });
 }

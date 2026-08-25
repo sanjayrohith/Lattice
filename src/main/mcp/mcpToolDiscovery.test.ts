@@ -1,7 +1,7 @@
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { z } from 'zod';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { McpClient } from './mcpClient';
 import {
   discoverMcpTools,
@@ -92,6 +92,41 @@ describe('discoverMcpTools', () => {
 
     expect(discovered.map((d) => d.serverId).sort()).toEqual(['server-a', 'server-b']);
   });
+
+  it('skips a server whose listTools call throws, logging a warning, without failing the others', async () => {
+    const { client: goodClient, server: goodServer } = await connectedEchoClient();
+    cleanups.push(async () => {
+      await goodClient.disconnect();
+      await goodServer.close();
+    });
+
+    const badClient = { connected: true, listTools: async () => Promise.reject(new Error('malformed response')) };
+    const clients: Record<string, unknown> = { good: goodClient, bad: badClient };
+    const logger = { warn: vi.fn() };
+
+    const discovered = await discoverMcpTools(
+      [stdioConfig('good'), stdioConfig('bad')],
+      (id) => clients[id] as McpClient | undefined,
+      { logger },
+    );
+
+    expect(discovered).toEqual([{ serverId: 'good', descriptor: expect.objectContaining({ name: 'echo' }) }]);
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('bad'));
+  });
+
+  it('skips a server whose listTools call hangs past the timeout', async () => {
+    const hungClient = { connected: true, listTools: () => new Promise(() => undefined) };
+    const logger = { warn: vi.fn() };
+
+    const discovered = await discoverMcpTools(
+      [stdioConfig('hung')],
+      () => hungClient as unknown as McpClient,
+      { timeoutMs: 10, logger },
+    );
+
+    expect(discovered).toEqual([]);
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('timed out'));
+  });
 });
 
 describe('toMcpAnyTool / mergeMcpToolsIntoToolset', () => {
@@ -178,6 +213,19 @@ describe('toMcpAnyTool / mergeMcpToolsIntoToolset', () => {
 
     const merged = mergeMcpToolsIntoToolset([baseTool], discovered, () => client);
     expect(merged.map((t) => t.name)).toEqual(['read_file', 'mcp__server-1__read_file']);
+  });
+
+  it('logs a warning and rethrows when an invocation hangs past the call timeout', async () => {
+    const hungClient = {
+      callTool: () => new Promise(() => undefined),
+    } as unknown as McpClient;
+    const logger = { warn: vi.fn() };
+
+    const discovered = { serverId: 'server-1', descriptor: { name: 'slow', description: '', inputSchema: {} } };
+    const tool = toMcpAnyTool(discovered, () => hungClient, { callTimeoutMs: 10, logger });
+
+    await expect(tool.execute({}, { workspaceRoot: '/workspace' })).rejects.toThrow('timed out');
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('slow'));
   });
 });
 
