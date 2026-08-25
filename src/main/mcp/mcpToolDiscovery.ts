@@ -1,6 +1,6 @@
-import { z } from 'zod';
-import type { AnyTool } from '../tools/types';
+import type { AnyTool, ConsentPolicy } from '../tools/types';
 import { defineTool } from '../tools/types';
+import { jsonSchemaToZod, type JsonSchema } from './jsonSchemaToZod';
 import type { McpClient, McpToolDescriptor } from './mcpClient';
 import type { McpServerConfig } from './mcpServerConfig';
 
@@ -68,40 +68,54 @@ export function resolveToolNameCollision(candidate: string, existingNames: Reado
   return `${candidate}__${attempt}`;
 }
 
+export interface ToMcpAnyToolOptions {
+  existingNames?: ReadonlySet<string>;
+  /** Namespaced tool names (see {@link namespaceMcpToolName}) the user has explicitly allowlisted to run without prompting. */
+  consentAllowlist?: ReadonlySet<string>;
+}
+
 /**
  * Wraps one discovered MCP tool as an internal {@link AnyTool}, named
  * per {@link namespaceMcpToolName} and disambiguated against
- * `existingNames` via {@link resolveToolNameCollision}. The input schema
- * here is deliberately permissive (`z.record(z.unknown())`) — deriving a
- * precise Zod schema from the tool's JSON Schema is `feat(mcp): adapt
- * mcp tools into the internal tool interface`; validation in the
- * meantime is left to the MCP server itself, which will reject a
- * malformed call. `defaultConsent: 'ask'` because an externally supplied
- * tool is never implicitly trusted the way a built-in filesystem tool is.
+ * `options.existingNames` via {@link resolveToolNameCollision}. The
+ * input schema is derived from the tool's declared JSON Schema via
+ * {@link jsonSchemaToZod} — real per-field validation and the
+ * descriptions the model relies on for guidance, rather than the
+ * permissive `z.record(z.unknown())` placeholder `feat(mcp): discover
+ * tools at the start of every turn` used. `defaultConsent` is `'ask'`
+ * unless the resolved name appears in `options.consentAllowlist`, in
+ * which case it is `'always'` — an externally supplied tool is never
+ * implicitly trusted the way a built-in filesystem tool is, except where
+ * the user has explicitly said otherwise.
  */
 export function toMcpAnyTool(
   discovered: McpDiscoveredTool,
   getClient: McpClientLookup,
-  existingNames: ReadonlySet<string> = new Set(),
+  options: ToMcpAnyToolOptions = {},
 ): AnyTool {
   const name = resolveToolNameCollision(
     namespaceMcpToolName(discovered.serverId, discovered.descriptor.name),
-    existingNames,
+    options.existingNames ?? new Set(),
   );
+  const defaultConsent: ConsentPolicy = options.consentAllowlist?.has(name) ? 'always' : 'ask';
 
   return defineTool({
     name,
     description: discovered.descriptor.description,
-    inputSchema: z.record(z.string(), z.unknown()),
-    defaultConsent: 'ask',
-    execute: async (input: Record<string, unknown>) => {
+    inputSchema: jsonSchemaToZod(discovered.descriptor.inputSchema as JsonSchema | undefined),
+    defaultConsent,
+    execute: async (input: unknown) => {
       const client = getClient(discovered.serverId);
       if (!client) {
         throw new Error(`mcp server "${discovered.serverId}" is not connected`);
       }
-      return client.callTool(discovered.descriptor.name, input);
+      return client.callTool(discovered.descriptor.name, input as Record<string, unknown>);
     },
   });
+}
+
+export interface MergeMcpToolsOptions {
+  consentAllowlist?: ReadonlySet<string>;
 }
 
 /**
@@ -114,12 +128,16 @@ export function mergeMcpToolsIntoToolset(
   baseTools: readonly AnyTool[],
   discovered: readonly McpDiscoveredTool[],
   getClient: McpClientLookup,
+  options: MergeMcpToolsOptions = {},
 ): AnyTool[] {
   const usedNames = new Set(baseTools.map((tool) => tool.name));
   const mcpTools: AnyTool[] = [];
 
   for (const tool of discovered) {
-    const wrapped = toMcpAnyTool(tool, getClient, usedNames);
+    const wrapped = toMcpAnyTool(tool, getClient, {
+      existingNames: usedNames,
+      consentAllowlist: options.consentAllowlist,
+    });
     usedNames.add(wrapped.name);
     mcpTools.push(wrapped);
   }

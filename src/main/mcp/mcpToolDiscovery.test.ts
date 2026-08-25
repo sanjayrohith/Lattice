@@ -113,10 +113,28 @@ describe('toMcpAnyTool / mergeMcpToolsIntoToolset', () => {
 
     expect(tool.name).toBe('mcp__server-1__echo');
     expect(tool.defaultConsent).toBe('ask');
+    expect(() => tool.inputSchema.parse({})).toThrow();
+    expect(tool.inputSchema.parse({ text: 'hi' })).toEqual({ text: 'hi' });
+
     const result = (await tool.execute({ text: 'hi' }, { workspaceRoot: '/workspace' })) as {
       content: Array<{ text: string }>;
     };
     expect(result.content[0]?.text).toBe('hi');
+  });
+
+  it('sets defaultConsent to always when the resolved name is explicitly allowlisted', async () => {
+    const { client, server } = await connectedEchoClient();
+    cleanups.push(async () => {
+      await client.disconnect();
+      await server.close();
+    });
+
+    const [discovered] = await discoverMcpTools([stdioConfig('server-1')], () => client);
+    const tool = toMcpAnyTool(discovered!, () => client, {
+      consentAllowlist: new Set(['mcp__server-1__echo']),
+    });
+
+    expect(tool.defaultConsent).toBe('always');
   });
 
   it('appends wrapped mcp tools after the base toolset', async () => {
