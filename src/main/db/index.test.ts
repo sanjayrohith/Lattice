@@ -46,6 +46,7 @@ describe('initializeDatabase', () => {
       'sessions',
       'settings',
       'tool_calls',
+      'tool_outcomes',
       'usage_records',
     ]);
   });

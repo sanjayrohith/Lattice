@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { ToolOutcomeRepository } from '../db/repositories/toolOutcomeRepository';
 import type { LockManager, LockOwner } from '../locks/lockManager';
 import type { SeenRangeTracker } from '../memory/seenRangeTracker';
 
@@ -43,6 +44,14 @@ export interface ToolExecutionContext {
    * most unit tests), in which case content-bearing tools skip tracking.
    */
   seenRanges?: SeenRangeTracker;
+  /**
+   * Records each edit-strategy tool's success/failure per file type, so
+   * `selectEditStrategy` can bias future runs toward whichever of
+   * `edit_file`/`rewrite_file` has actually proven reliable for a given
+   * extension. Omitted in contexts with no telemetry store wired up
+   * (e.g. most unit tests), in which case those tools skip recording.
+   */
+  toolOutcomes?: ToolOutcomeRepository;
 }
 
 /**

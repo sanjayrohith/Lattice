@@ -1,10 +1,11 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { rewriteFileTool } from './rewriteFile';
 import { WorkspacePathEscapeError } from './pathSandbox';
 import { LockAlreadyHeldError, LockManager } from '../locks/lockManager';
+import type { ToolOutcomeRepository } from '../db/repositories/toolOutcomeRepository';
 
 describe('rewriteFileTool', () => {
   let workspaceRoot: string;
@@ -108,5 +109,13 @@ describe('rewriteFileTool', () => {
     });
 
     expect(locks.isLocked(join(workspaceRoot, 'a.txt'))).toBe(false);
+  });
+
+  it('records a success outcome for rewrite_file/.txt on a successful rewrite', async () => {
+    const toolOutcomes = { record: vi.fn() } as unknown as ToolOutcomeRepository;
+
+    await rewriteFileTool.execute(parse({ path: 'a.txt', content: 'x' }), { workspaceRoot, toolOutcomes });
+
+    expect(toolOutcomes.record).toHaveBeenCalledWith('rewrite_file', '.txt', true);
   });
 });

@@ -1,10 +1,11 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { editFileTool, SearchReplaceMismatchError } from './editFile';
 import { WorkspacePathEscapeError } from './pathSandbox';
 import { LockAlreadyHeldError, LockManager } from '../locks/lockManager';
+import type { ToolOutcomeRepository } from '../db/repositories/toolOutcomeRepository';
 
 describe('editFileTool', () => {
   let workspaceRoot: string;
@@ -118,5 +119,28 @@ describe('editFileTool', () => {
     });
 
     expect(locks.isLocked(join(workspaceRoot, 'a.txt'))).toBe(false);
+  });
+
+  it('records a success outcome for edit_file/.txt when the edit succeeds', async () => {
+    writeFileSync(join(workspaceRoot, 'a.txt'), 'const x = 1;');
+    const toolOutcomes = { record: vi.fn() } as unknown as ToolOutcomeRepository;
+
+    await editFileTool.execute(parse({ path: 'a.txt', search: 'const x = 1;', replace: 'x' }), {
+      workspaceRoot,
+      toolOutcomes,
+    });
+
+    expect(toolOutcomes.record).toHaveBeenCalledWith('edit_file', '.txt', true);
+  });
+
+  it('records a failure outcome for edit_file/.txt when the edit is rejected', async () => {
+    writeFileSync(join(workspaceRoot, 'a.txt'), 'foo\nfoo');
+    const toolOutcomes = { record: vi.fn() } as unknown as ToolOutcomeRepository;
+
+    await expect(
+      editFileTool.execute(parse({ path: 'a.txt', search: 'foo', replace: 'bar' }), { workspaceRoot, toolOutcomes }),
+    ).rejects.toThrow();
+
+    expect(toolOutcomes.record).toHaveBeenCalledWith('edit_file', '.txt', false);
   });
 });

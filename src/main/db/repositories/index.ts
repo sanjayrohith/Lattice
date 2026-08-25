@@ -8,3 +8,4 @@ export {
 } from './toolCallRepository';
 export { AgentProfileRepository, type AgentProfileInput } from './agentProfileRepository';
 export { McpServerRepository, type McpServerConfigInput } from './mcpServerRepository';
+export { ToolOutcomeRepository, type ToolOutcomeStats } from './toolOutcomeRepository';

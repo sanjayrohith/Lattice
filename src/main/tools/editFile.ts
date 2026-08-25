@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
 import { withFileLock } from '../locks/withFileLock';
+import { fileExtensionOf } from '../telemetry/fileExtension';
 import { atomicWriteFile } from './atomicWrite';
 import { resolveWorkspacePath } from './pathSandbox';
 import { defineTool } from './types';
@@ -63,18 +64,24 @@ export const editFileTool = defineTool({
   execute: async (input, context): Promise<EditFileOutput> => {
     const resolvedPath = resolveWorkspacePath(context.workspaceRoot, input.path);
 
-    const bytesWritten = await withFileLock(context, resolvedPath, async () => {
-      const original = await readFile(resolvedPath, 'utf-8');
+    try {
+      const bytesWritten = await withFileLock(context, resolvedPath, async () => {
+        const original = await readFile(resolvedPath, 'utf-8');
 
-      const occurrences = countOccurrences(original, input.search);
-      if (occurrences !== 1) {
-        throw new SearchReplaceMismatchError(input.path, occurrences);
-      }
+        const occurrences = countOccurrences(original, input.search);
+        if (occurrences !== 1) {
+          throw new SearchReplaceMismatchError(input.path, occurrences);
+        }
 
-      const updated = original.replace(input.search, input.replace);
-      return atomicWriteFile(resolvedPath, updated);
-    });
+        const updated = original.replace(input.search, input.replace);
+        return atomicWriteFile(resolvedPath, updated);
+      });
 
-    return { path: input.path, bytesWritten };
+      context.toolOutcomes?.record('edit_file', fileExtensionOf(input.path), true);
+      return { path: input.path, bytesWritten };
+    } catch (error) {
+      context.toolOutcomes?.record('edit_file', fileExtensionOf(input.path), false);
+      throw error;
+    }
   },
 });
