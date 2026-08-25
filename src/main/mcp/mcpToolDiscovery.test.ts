@@ -3,7 +3,13 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { z } from 'zod';
 import { afterEach, describe, expect, it } from 'vitest';
 import { McpClient } from './mcpClient';
-import { discoverMcpTools, mergeMcpToolsIntoToolset, toMcpAnyTool } from './mcpToolDiscovery';
+import {
+  discoverMcpTools,
+  mergeMcpToolsIntoToolset,
+  namespaceMcpToolName,
+  resolveToolNameCollision,
+  toMcpAnyTool,
+} from './mcpToolDiscovery';
 import type { McpServerConfig } from './mcpServerConfig';
 import type { AnyTool } from '../tools/types';
 
@@ -105,6 +111,7 @@ describe('toMcpAnyTool / mergeMcpToolsIntoToolset', () => {
     const [discovered] = await discoverMcpTools([stdioConfig('server-1')], () => client);
     const tool = toMcpAnyTool(discovered!, () => client);
 
+    expect(tool.name).toBe('mcp__server-1__echo');
     expect(tool.defaultConsent).toBe('ask');
     const result = (await tool.execute({ text: 'hi' }, { workspaceRoot: '/workspace' })) as {
       content: Array<{ text: string }>;
@@ -129,6 +136,46 @@ describe('toMcpAnyTool / mergeMcpToolsIntoToolset', () => {
     };
 
     const merged = mergeMcpToolsIntoToolset([baseTool], discovered, () => client);
-    expect(merged.map((t) => t.name)).toEqual(['read_file', 'echo']);
+    expect(merged.map((t) => t.name)).toEqual(['read_file', 'mcp__server-1__echo']);
+  });
+
+  it('never produces a name colliding with a built-in tool, even a same-named mcp tool', async () => {
+    const { client, server } = await connectedEchoClient();
+    cleanups.push(async () => {
+      await client.disconnect();
+      await server.close();
+    });
+
+    const baseTool: AnyTool = {
+      name: 'read_file',
+      description: 'reads a file',
+      inputSchema: z.object({}),
+      defaultConsent: 'always',
+      execute: async () => ({}),
+    };
+
+    const discovered = [
+      { serverId: 'server-1', descriptor: { name: 'read_file', description: 'a server tool named read_file', inputSchema: {} } },
+    ];
+
+    const merged = mergeMcpToolsIntoToolset([baseTool], discovered, () => client);
+    expect(merged.map((t) => t.name)).toEqual(['read_file', 'mcp__server-1__read_file']);
+  });
+});
+
+describe('namespaceMcpToolName', () => {
+  it('prefixes the tool name with the owning server id', () => {
+    expect(namespaceMcpToolName('server-1', 'echo')).toBe('mcp__server-1__echo');
+  });
+});
+
+describe('resolveToolNameCollision', () => {
+  it('returns the candidate unchanged when it is already unique', () => {
+    expect(resolveToolNameCollision('mcp__a__echo', new Set())).toBe('mcp__a__echo');
+  });
+
+  it('appends an incrementing suffix until the name is unique', () => {
+    const existing = new Set(['mcp__a__echo', 'mcp__a__echo__2']);
+    expect(resolveToolNameCollision('mcp__a__echo', existing)).toBe('mcp__a__echo__3');
   });
 });
