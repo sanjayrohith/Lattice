@@ -121,6 +121,24 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: trigger a full reindex of the workspace into memory. */
   MEMORY_REINDEX: 'memory:reindex',
+
+  /** Renderer -> main: list every configured MCP server alongside its live health. */
+  MCP_SERVER_LIST: 'mcp:server-list',
+
+  /** Renderer -> main: create or update an MCP server configuration. */
+  MCP_SERVER_UPSERT: 'mcp:server-upsert',
+
+  /** Renderer -> main: delete an MCP server configuration. */
+  MCP_SERVER_DELETE: 'mcp:server-delete',
+
+  /** Renderer -> main: enable or disable an MCP server, connecting or disconnecting it accordingly. */
+  MCP_SERVER_SET_ENABLED: 'mcp:server-set-enabled',
+
+  /** Renderer -> main: fetch a connected MCP server's discovered tools and resources. */
+  MCP_SERVER_INSPECT: 'mcp:server-inspect',
+
+  /** Renderer -> main: set a per-tool consent override on an MCP server. */
+  MCP_SERVER_SET_TOOL_CONSENT: 'mcp:server-set-tool-consent',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

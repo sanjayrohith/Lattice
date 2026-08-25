@@ -10,6 +10,7 @@ function config(overrides: Partial<McpHttpServerConfig> = {}): McpHttpServerConf
     transport: 'http',
     url: 'https://mcp.example.test/rpc',
     headers: { authorization: 'Bearer secret-token' },
+    consentOverrides: {},
     ...overrides,
   };
 }

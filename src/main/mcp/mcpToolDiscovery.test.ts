@@ -15,7 +15,7 @@ import type { McpServerConfig } from './mcpServerConfig';
 import type { AnyTool } from '../tools/types';
 
 function stdioConfig(id: string, enabled = true): McpServerConfig {
-  return { id, displayName: id, enabled, transport: 'stdio', command: 'noop', args: [], env: {} };
+  return { id, displayName: id, enabled, transport: 'stdio', command: 'noop', args: [], env: {}, consentOverrides: {} };
 }
 
 async function connectedEchoClient(): Promise<{ client: McpClient; server: McpServer }> {

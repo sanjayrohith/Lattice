@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/** A per-tool override of {@link ConsentPolicy}, keyed by the tool's namespaced name (see `namespaceMcpToolName`). */
+export const mcpConsentOverridesSchema = z.record(z.string(), z.enum(['always', 'ask', 'never'])).default({});
+
 /**
  * How the orchestrator reaches an MCP server: `stdio` spawns a local
  * process and speaks JSON-RPC over its stdin/stdout, exactly like an ACP
@@ -14,6 +17,7 @@ export const mcpStdioServerConfigSchema = z.object({
   command: z.string().min(1),
   args: z.array(z.string()).default([]),
   env: z.record(z.string(), z.string()).default({}),
+  consentOverrides: mcpConsentOverridesSchema,
 });
 export type McpStdioServerConfig = z.infer<typeof mcpStdioServerConfigSchema>;
 
@@ -24,6 +28,7 @@ export const mcpHttpServerConfigSchema = z.object({
   transport: z.literal('http'),
   url: z.string().url(),
   headers: z.record(z.string(), z.string()).default({}),
+  consentOverrides: mcpConsentOverridesSchema,
 });
 export type McpHttpServerConfig = z.infer<typeof mcpHttpServerConfigSchema>;
 

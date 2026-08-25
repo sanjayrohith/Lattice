@@ -15,7 +15,15 @@ describe('McpServerRepository', () => {
   });
 
   function stdioInput(displayName = 'Local Filesystem'): Parameters<McpServerRepository['create']>[0] {
-    return { displayName, enabled: true, transport: 'stdio', command: 'mcp-fs', args: ['--root', '.'], env: {} };
+    return {
+      displayName,
+      enabled: true,
+      transport: 'stdio',
+      command: 'mcp-fs',
+      args: ['--root', '.'],
+      env: {},
+      consentOverrides: {},
+    };
   }
 
   function httpInput(displayName = 'Remote Search'): Parameters<McpServerRepository['create']>[0] {
@@ -25,6 +33,7 @@ describe('McpServerRepository', () => {
       transport: 'http',
       url: 'https://mcp.example.test/rpc',
       headers: { authorization: 'Bearer token' },
+      consentOverrides: {},
     };
   }
 
@@ -73,5 +82,20 @@ describe('McpServerRepository', () => {
 
   it('reports false deleting a missing id', () => {
     expect(repository.delete('missing')).toBe(false);
+  });
+
+  it('upsert creates a new row at the caller-supplied id', () => {
+    const config = repository.upsert({ id: 'server-1', ...stdioInput('New Server') } as never);
+    expect(config.id).toBe('server-1');
+    expect(repository.findById('server-1')).toEqual(config);
+  });
+
+  it('upsert replaces an existing row at the same id', () => {
+    const first = repository.upsert({ id: 'server-1', ...stdioInput('First') } as never);
+    const second = repository.upsert({ id: 'server-1', ...stdioInput('Second') } as never);
+
+    expect(second.id).toBe(first.id);
+    expect(repository.list()).toHaveLength(1);
+    expect(repository.findById('server-1')?.displayName).toBe('Second');
   });
 });

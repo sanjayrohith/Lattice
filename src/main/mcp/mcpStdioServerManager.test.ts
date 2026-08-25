@@ -14,6 +14,7 @@ function config(overrides: Partial<McpStdioServerConfig> = {}): McpStdioServerCo
     command: 'mcp-test',
     args: [],
     env: {},
+    consentOverrides: {},
     ...overrides,
   };
 }

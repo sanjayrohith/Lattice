@@ -46,6 +46,31 @@ export class McpServerRepository {
     return config;
   }
 
+  /**
+   * Creates a new row at `config.id` if none exists, or fully replaces
+   * the existing one otherwise — unlike {@link create}, the id is
+   * caller-supplied rather than generated, so a "add server" UI flow can
+   * mint the id client-side and this single call handles both the
+   * initial save and every subsequent edit.
+   */
+  upsert(config: McpServerConfig): McpServerConfig {
+    const parsed = mcpServerConfigSchema.parse(config);
+    const now = new Date().toISOString();
+    const existingRow = this.db.prepare('SELECT created_at FROM mcp_servers WHERE id = ?').get(parsed.id) as
+      | { created_at: string }
+      | undefined;
+
+    this.db
+      .prepare(
+        `INSERT INTO mcp_servers (id, display_name, enabled, config, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET display_name = excluded.display_name, enabled = excluded.enabled, config = excluded.config, updated_at = excluded.updated_at`,
+      )
+      .run(parsed.id, parsed.displayName, parsed.enabled ? 1 : 0, JSON.stringify(parsed), existingRow?.created_at ?? now, now);
+
+    return parsed;
+  }
+
   findById(id: string): McpServerConfig | undefined {
     const row = this.db.prepare('SELECT * FROM mcp_servers WHERE id = ?').get(id) as McpServerRow | undefined;
     return row ? fromRow(row) : undefined;

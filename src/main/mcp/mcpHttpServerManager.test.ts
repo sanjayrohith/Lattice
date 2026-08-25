@@ -13,6 +13,7 @@ function config(overrides: Partial<McpHttpServerConfig> = {}): McpHttpServerConf
     transport: 'http',
     url: 'https://mcp.example.test/rpc',
     headers: {},
+    consentOverrides: {},
     ...overrides,
   };
 }

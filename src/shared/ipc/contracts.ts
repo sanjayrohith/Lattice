@@ -293,6 +293,71 @@ const memorySearchResponseSchema = z.object({ results: z.array(memorySearchChunk
 const memoryReindexRequestSchema = z.void();
 const memoryReindexResponseSchema = z.object({ reindexed: z.boolean(), changedFiles: z.number() });
 
+const mcpConsentOverridesSchema = z.record(z.string(), z.enum(['always', 'ask', 'never'])).default({});
+
+const mcpServerConfigSchema = z.discriminatedUnion('transport', [
+  z.object({
+    id: z.string().min(1),
+    displayName: z.string().min(1),
+    enabled: z.boolean().default(true),
+    transport: z.literal('stdio'),
+    command: z.string().min(1),
+    args: z.array(z.string()).default([]),
+    env: z.record(z.string(), z.string()).default({}),
+    consentOverrides: mcpConsentOverridesSchema,
+  }),
+  z.object({
+    id: z.string().min(1),
+    displayName: z.string().min(1),
+    enabled: z.boolean().default(true),
+    transport: z.literal('http'),
+    url: z.string().url(),
+    headers: z.record(z.string(), z.string()).default({}),
+    consentOverrides: mcpConsentOverridesSchema,
+  }),
+]);
+
+const mcpServerHealthSchema = z.object({
+  connectorId: z.string(),
+  state: z.enum(['starting', 'running', 'restarting', 'unavailable', 'stopped']),
+  consecutiveFailures: z.number().int().nonnegative(),
+  lastError: z.string().optional(),
+});
+
+const mcpServerListRequestSchema = z.void();
+const mcpServerListResponseSchema = z.object({
+  servers: z.array(z.object({ config: mcpServerConfigSchema, health: mcpServerHealthSchema })),
+});
+
+const mcpServerUpsertRequestSchema = z.object({ config: mcpServerConfigSchema });
+const mcpServerUpsertResponseSchema = z.object({ config: mcpServerConfigSchema });
+
+const mcpServerDeleteRequestSchema = z.object({ id: z.string().min(1) });
+const mcpServerDeleteResponseSchema = z.object({ deleted: z.boolean() });
+
+const mcpServerSetEnabledRequestSchema = z.object({ id: z.string().min(1), enabled: z.boolean() });
+const mcpServerSetEnabledResponseSchema = z.object({ config: mcpServerConfigSchema.nullable() });
+
+const mcpInspectToolSchema = z.object({ name: z.string(), description: z.string(), inputSchema: z.unknown() });
+const mcpInspectResourceSchema = z.object({
+  uri: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  mimeType: z.string().optional(),
+});
+const mcpServerInspectRequestSchema = z.object({ id: z.string().min(1) });
+const mcpServerInspectResponseSchema = z.object({
+  tools: z.array(mcpInspectToolSchema),
+  resources: z.array(mcpInspectResourceSchema),
+});
+
+const mcpServerSetToolConsentRequestSchema = z.object({
+  id: z.string().min(1),
+  toolName: z.string().min(1),
+  policy: z.enum(['always', 'ask', 'never']),
+});
+const mcpServerSetToolConsentResponseSchema = z.object({ config: mcpServerConfigSchema.nullable() });
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -453,6 +518,30 @@ export const ipcContracts = {
   [IPC_CHANNELS.MEMORY_REINDEX]: {
     request: memoryReindexRequestSchema,
     response: memoryReindexResponseSchema,
+  },
+  [IPC_CHANNELS.MCP_SERVER_LIST]: {
+    request: mcpServerListRequestSchema,
+    response: mcpServerListResponseSchema,
+  },
+  [IPC_CHANNELS.MCP_SERVER_UPSERT]: {
+    request: mcpServerUpsertRequestSchema,
+    response: mcpServerUpsertResponseSchema,
+  },
+  [IPC_CHANNELS.MCP_SERVER_DELETE]: {
+    request: mcpServerDeleteRequestSchema,
+    response: mcpServerDeleteResponseSchema,
+  },
+  [IPC_CHANNELS.MCP_SERVER_SET_ENABLED]: {
+    request: mcpServerSetEnabledRequestSchema,
+    response: mcpServerSetEnabledResponseSchema,
+  },
+  [IPC_CHANNELS.MCP_SERVER_INSPECT]: {
+    request: mcpServerInspectRequestSchema,
+    response: mcpServerInspectResponseSchema,
+  },
+  [IPC_CHANNELS.MCP_SERVER_SET_TOOL_CONSENT]: {
+    request: mcpServerSetToolConsentRequestSchema,
+    response: mcpServerSetToolConsentResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 
