@@ -7,6 +7,32 @@ export interface McpToolDescriptor {
   inputSchema: unknown;
 }
 
+export interface McpResourceDescriptor {
+  uri: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+}
+
+export interface McpResourceContent {
+  uri: string;
+  mimeType?: string;
+  text?: string;
+  blob?: string;
+}
+
+export interface McpPromptArgument {
+  name: string;
+  description?: string;
+  required?: boolean;
+}
+
+export interface McpPromptDescriptor {
+  name: string;
+  description?: string;
+  arguments?: McpPromptArgument[];
+}
+
 export interface McpRequestOptions {
   /** Milliseconds to wait before aborting this request; the SDK default (60s) applies when omitted. */
   timeoutMs?: number;
@@ -113,6 +139,50 @@ export class McpClient {
       throw new McpToolCallError(name, JSON.stringify(result.content));
     }
     return result;
+  }
+
+  async listResources(options: McpRequestOptions = {}): Promise<McpResourceDescriptor[]> {
+    const client = this.requireClient();
+    try {
+      const result = await client.listResources(undefined, toRequestOptions(options));
+      return result.resources.map((resource) => ({
+        uri: resource.uri,
+        name: resource.name,
+        description: resource.description,
+        mimeType: resource.mimeType,
+      }));
+    } catch (error) {
+      throw new McpToolCallError('listResources', error);
+    }
+  }
+
+  async readResource(uri: string, options: McpRequestOptions = {}): Promise<McpResourceContent[]> {
+    const client = this.requireClient();
+    try {
+      const result = await client.readResource({ uri }, toRequestOptions(options));
+      return result.contents.map((content) => ({
+        uri: content.uri,
+        mimeType: content.mimeType,
+        text: 'text' in content ? content.text : undefined,
+        blob: 'blob' in content ? content.blob : undefined,
+      }));
+    } catch (error) {
+      throw new McpToolCallError('readResource', error);
+    }
+  }
+
+  async listPrompts(options: McpRequestOptions = {}): Promise<McpPromptDescriptor[]> {
+    const client = this.requireClient();
+    try {
+      const result = await client.listPrompts(undefined, toRequestOptions(options));
+      return result.prompts.map((prompt) => ({
+        name: prompt.name,
+        description: prompt.description,
+        arguments: prompt.arguments,
+      }));
+    } catch (error) {
+      throw new McpToolCallError('listPrompts', error);
+    }
   }
 
   async disconnect(): Promise<void> {
