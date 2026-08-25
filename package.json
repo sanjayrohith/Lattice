@@ -6,6 +6,7 @@
   "type": "module",
   "author": "sanjayrohith",
   "license": "MIT",
+  "main": "out/main/index.js",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -13,6 +14,11 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
+    "postinstall": "electron-builder install-app-deps",
+    "package": "npm run build && electron-builder --config electron-builder.yml",
+    "package:mac": "npm run build && electron-builder --config electron-builder.yml --mac",
+    "package:win": "npm run build && electron-builder --config electron-builder.yml --win",
+    "package:linux": "npm run build && electron-builder --config electron-builder.yml --linux",
     "typecheck": "npm run typecheck:main && npm run typecheck:preload && npm run typecheck:renderer",
     "typecheck:main": "tsc --noEmit -p tsconfig.main.json",
     "typecheck:preload": "tsc --noEmit -p tsconfig.preload.json",
@@ -37,6 +43,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/ui": "^4.1.11",
     "electron": "^44.0.0",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",

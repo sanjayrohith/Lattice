@@ -1,0 +1,59 @@
+# electron-builder configuration for Lattice.
+#
+# `npm run package` builds the electron-vite bundles first (`out/main`,
+# `out/preload`, `out/renderer`) and then packages them for the host
+# platform; `package:mac`/`package:win`/`package:linux` force a specific
+# target. Native modules (better-sqlite3) are rebuilt against Electron's
+# ABI by `postinstall`'s `electron-builder install-app-deps`, and are
+# excluded from the asar archive below since a native addon cannot be
+# loaded from inside one.
+appId: com.sanjayrohith.lattice
+productName: Lattice
+copyright: Copyright © sanjayrohith
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - out/**/*
+  - package.json
+  - "!**/*.ts"
+  - "!**/*.map"
+
+asar: true
+asarUnpack:
+  - "**/node_modules/better-sqlite3/**/*"
+
+# A stable, reproducible artifact name across platforms and architectures
+# — no build-machine-specific or timestamp-derived component — so two
+# builds of the same version+platform+arch always produce the same
+# filename.
+artifactName: "${productName}-${version}-${platform}-${arch}.${ext}"
+
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+  category: public.app-category.developer-tools
+
+win:
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+
+linux:
+  target:
+    - target: AppImage
+      arch: [x64, arm64]
+    - target: deb
+      arch: [x64, arm64]
+  category: Development
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
