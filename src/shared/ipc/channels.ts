@@ -139,6 +139,15 @@ export const IPC_CHANNELS = {
 
   /** Renderer -> main: set a per-tool consent override on an MCP server. */
   MCP_SERVER_SET_TOOL_CONSENT: 'mcp:server-set-tool-consent',
+
+  /** Renderer -> main: manually trigger an update check (a no-op if auto-update is disabled). */
+  UPDATE_CHECK: 'update:check',
+
+  /** Renderer -> main: quit and install an already-downloaded update. */
+  UPDATE_INSTALL: 'update:install',
+
+  /** Main -> renderer: a downloaded update is ready to install. */
+  UPDATE_AVAILABLE: 'update:available',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

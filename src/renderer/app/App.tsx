@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 
 import { TitleBar } from '../shell/TitleBar';
 import { StatusBar } from '../shell/StatusBar';
+import { UpdatePrompt } from '../shell/UpdatePrompt';
 import { DockviewShell } from '../workspace/DockviewShell';
 import { useIpcHydration } from '../state/ipcHydration';
 import { ConsentModal } from '../consent/ConsentModal';
@@ -18,6 +19,7 @@ export function App(): JSX.Element {
       </main>
       <StatusBar />
       <ConsentModal />
+      <UpdatePrompt />
     </div>
   );
 }

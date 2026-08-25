@@ -65,6 +65,10 @@ export const consentRequestEventSchema = z.object({
 });
 export type ConsentRequestEvent = z.infer<typeof consentRequestEventSchema>;
 
+/** Broadcast once a background-checked update has finished downloading and is ready to install. */
+export const updateAvailableEventSchema = z.object({ version: z.string() });
+export type UpdateAvailableEvent = z.infer<typeof updateAvailableEventSchema>;
+
 export const ipcEventContracts = {
   [IPC_CHANNELS.STATE_REVISION]: z.object({
     revision: z.number().int().nonnegative(),
@@ -72,6 +76,7 @@ export const ipcEventContracts = {
   }),
   [IPC_CHANNELS.RUN_STREAM]: z.array(runStreamEventSchema),
   [IPC_CHANNELS.CONSENT_REQUEST]: consentRequestEventSchema,
+  [IPC_CHANNELS.UPDATE_AVAILABLE]: updateAvailableEventSchema,
 } satisfies Partial<Record<IpcChannel, z.ZodTypeAny>>;
 
 export type IpcEventContracts = typeof ipcEventContracts;

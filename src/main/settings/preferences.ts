@@ -9,6 +9,8 @@ export interface Preferences {
   stepCap: number;
   defaultAgentId: string | null;
   telemetryOptIn: boolean;
+  /** Gates both the background update check and the in-app update prompt; off means the app never checks. */
+  autoUpdateEnabled: boolean;
 }
 
 export const PREFERENCES_DEFAULTS: Preferences = {
@@ -16,6 +18,7 @@ export const PREFERENCES_DEFAULTS: Preferences = {
   stepCap: 25,
   defaultAgentId: null,
   telemetryOptIn: false,
+  autoUpdateEnabled: true,
 };
 
 /** JSON Schema enforced by `electron-store` (via `conf`) on every read and write. */
@@ -24,4 +27,5 @@ export const preferencesSchema: Schema<Preferences> = {
   stepCap: { type: 'number', minimum: 1, maximum: 200, default: PREFERENCES_DEFAULTS.stepCap },
   defaultAgentId: { type: ['string', 'null'], default: PREFERENCES_DEFAULTS.defaultAgentId },
   telemetryOptIn: { type: 'boolean', default: PREFERENCES_DEFAULTS.telemetryOptIn },
+  autoUpdateEnabled: { type: 'boolean', default: PREFERENCES_DEFAULTS.autoUpdateEnabled },
 };

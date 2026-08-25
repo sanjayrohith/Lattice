@@ -358,6 +358,12 @@ const mcpServerSetToolConsentRequestSchema = z.object({
 });
 const mcpServerSetToolConsentResponseSchema = z.object({ config: mcpServerConfigSchema.nullable() });
 
+const updateCheckRequestSchema = z.void();
+const updateCheckResponseSchema = z.object({ updateInfo: z.object({ version: z.string() }).nullable() });
+
+const updateInstallRequestSchema = z.void();
+const updateInstallResponseSchema = z.object({ installing: z.boolean() });
+
 const vaultListRequestSchema = z.void();
 const vaultCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -542,6 +548,14 @@ export const ipcContracts = {
   [IPC_CHANNELS.MCP_SERVER_SET_TOOL_CONSENT]: {
     request: mcpServerSetToolConsentRequestSchema,
     response: mcpServerSetToolConsentResponseSchema,
+  },
+  [IPC_CHANNELS.UPDATE_CHECK]: {
+    request: updateCheckRequestSchema,
+    response: updateCheckResponseSchema,
+  },
+  [IPC_CHANNELS.UPDATE_INSTALL]: {
+    request: updateInstallRequestSchema,
+    response: updateInstallResponseSchema,
   },
 } satisfies Partial<Record<IpcChannel, { request: z.ZodTypeAny; response: z.ZodTypeAny }>>;
 

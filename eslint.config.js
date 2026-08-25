@@ -81,5 +81,19 @@ export default tseslint.config(
       '@typescript-eslint/no-var-requires': 'off',
     },
   },
+  {
+    // electron-builder hook scripts: always CommonJS regardless of the
+    // package's "type": "module", since electron-builder loads them via require().
+    files: ['build/**/*.cjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.commonjs,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
   prettierConfig,
 );

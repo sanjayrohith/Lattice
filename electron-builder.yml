@@ -38,6 +38,21 @@ mac:
     - target: zip
       arch: [x64, arm64]
   category: public.app-category.developer-tools
+  # Required for notarization. Signing itself picks up the identity from
+  # the CSC_LINK/CSC_KEY_PASSWORD env vars (electron-builder's standard
+  # convention) — unset in an unsigned dev build, in which case
+  # electron-builder skips signing and afterSign below is a no-op.
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+# Runs after mac code signing; submits the app for notarization via
+# @electron/notarize. Reads APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD /
+# APPLE_TEAM_ID from the environment and skips itself entirely — logging
+# why — when they are absent, so a local unsigned dev build never
+# blocks on missing Apple credentials.
+afterSign: build/notarize.cjs
 
 win:
   target:
@@ -45,6 +60,9 @@ win:
       arch: [x64, arm64]
     - target: zip
       arch: [x64, arm64]
+  # Signing identity comes from the same CSC_LINK/CSC_KEY_PASSWORD env
+  # vars as mac, or CSC_IDENTITY_AUTO_DISCOVERY on a machine with a
+  # certificate already installed in the Windows certificate store.
 
 linux:
   target:
@@ -57,3 +75,12 @@ linux:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
+
+# electron-updater's feed. Point PUBLISH_URL at the real release host
+# before shipping; generic/PUBLISH_URL keeps this config valid (and the
+# updater's `checkForUpdates` a clean no-op-if-unreachable) without
+# committing to a specific hosting provider up front.
+publish:
+  provider: generic
+  url: ${env.PUBLISH_URL}
+
