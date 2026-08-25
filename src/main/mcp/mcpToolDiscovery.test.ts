@@ -10,6 +10,7 @@ import {
   resolveToolNameCollision,
   toMcpAnyTool,
 } from './mcpToolDiscovery';
+import { McpToolDiscoveryCache } from './mcpToolCache';
 import type { McpServerConfig } from './mcpServerConfig';
 import type { AnyTool } from '../tools/types';
 
@@ -126,6 +127,52 @@ describe('discoverMcpTools', () => {
 
     expect(discovered).toEqual([]);
     expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('timed out'));
+  });
+
+  it('serves the second call from cache without querying the server again', async () => {
+    const { client, server } = await connectedEchoClient();
+    cleanups.push(async () => {
+      await client.disconnect();
+      await server.close();
+    });
+    const listToolsSpy = vi.spyOn(client, 'listTools');
+    const cache = new McpToolDiscoveryCache();
+
+    await discoverMcpTools([stdioConfig('server-1')], () => client, { cache });
+    await discoverMcpTools([stdioConfig('server-1')], () => client, { cache });
+
+    expect(listToolsSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-queries once the server config changes, invalidating the cached entry', async () => {
+    const { client, server } = await connectedEchoClient();
+    cleanups.push(async () => {
+      await client.disconnect();
+      await server.close();
+    });
+    const listToolsSpy = vi.spyOn(client, 'listTools');
+    const cache = new McpToolDiscoveryCache();
+
+    await discoverMcpTools([stdioConfig('server-1')], () => client, { cache });
+    await discoverMcpTools([{ ...stdioConfig('server-1'), displayName: 'renamed' }], () => client, { cache });
+
+    expect(listToolsSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('re-queries after an explicit cache invalidation', async () => {
+    const { client, server } = await connectedEchoClient();
+    cleanups.push(async () => {
+      await client.disconnect();
+      await server.close();
+    });
+    const listToolsSpy = vi.spyOn(client, 'listTools');
+    const cache = new McpToolDiscoveryCache();
+
+    await discoverMcpTools([stdioConfig('server-1')], () => client, { cache });
+    cache.invalidate('server-1');
+    await discoverMcpTools([stdioConfig('server-1')], () => client, { cache });
+
+    expect(listToolsSpy).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -10,6 +10,7 @@ import {
 import { jsonSchemaToZod, type JsonSchema } from './jsonSchemaToZod';
 import type { McpClient, McpToolDescriptor } from './mcpClient';
 import type { McpServerConfig } from './mcpServerConfig';
+import { configVersionOf, type McpToolDiscoveryCache } from './mcpToolCache';
 
 export interface McpDiscoveredTool {
   serverId: string;
@@ -22,15 +23,19 @@ export type McpClientLookup = (serverId: string) => McpClient | undefined;
 export interface DiscoverMcpToolsOptions {
   timeoutMs?: number;
   logger?: McpLogger;
+  /** When provided, a server's tool list is served from cache within its TTL instead of re-querying every call. */
+  cache?: McpToolDiscoveryCache;
 }
 
 /**
  * Queries every enabled, connected MCP server for its current tool
  * definitions. Called at the start of each agent turn — an MCP server's
- * tool list is not assumed static (`feat(mcp): cache tool discovery with
- * invalidation` is what makes that affordable per turn). A disabled
- * server, or one with no connected client, contributes nothing rather
- * than failing the discovery pass. Each server's discovery call is
+ * tool list is not assumed static, but `options.cache` (see
+ * {@link McpToolDiscoveryCache}) is what makes per-turn discovery
+ * affordable: a server already queried within its TTL is served from
+ * cache instead of re-querying. A disabled server, or one with no
+ * connected client, contributes nothing rather than failing the
+ * discovery pass. Each server's live discovery call (cache miss) is
  * independently isolated via {@link isolateMcpServerFailure}: a server
  * that hangs, crashes, or returns a malformed response is logged and
  * skipped rather than failing every other server's discovery — or the
@@ -48,11 +53,18 @@ export async function discoverMcpTools(
       const client = getClient(server.id);
       if (!client?.connected) return Promise.resolve([]);
 
+      const configVersion = configVersionOf(server);
+      const cached = options.cache?.get(server.id, configVersion);
+      if (cached) {
+        return Promise.resolve(cached.map((descriptor) => ({ serverId: server.id, descriptor })));
+      }
+
       return isolateMcpServerFailure(
         server.id,
         'tool discovery',
         async () => {
           const descriptors = await client.listTools();
+          options.cache?.set(server.id, descriptors, configVersion);
           return descriptors.map((descriptor) => ({ serverId: server.id, descriptor }));
         },
         [],
