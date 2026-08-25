@@ -6,8 +6,8 @@ export const mcpConsentOverridesSchema = z.record(z.string(), z.enum(['always', 
 /**
  * How the orchestrator reaches an MCP server: `stdio` spawns a local
  * process and speaks JSON-RPC over its stdin/stdout, exactly like an ACP
- * connector's stdio transport (`feat(acp): add stdio transport`); `http`
- * speaks to a remote server URL with optional auth headers.
+ * connector's stdio transport; `http` speaks to a remote server URL with
+ * optional auth headers.
  */
 export const mcpStdioServerConfigSchema = z.object({
   id: z.string().min(1),

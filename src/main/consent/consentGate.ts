@@ -18,11 +18,9 @@ export interface ConsentGateRequest {
  *   prompt — the tool never got a chance to ask.
  * - `always` accepts immediately, likewise without suspending the run.
  * - `ask` transitions the run into `awaiting-consent`, notifies whatever
- *   surfaced the request (the IPC channel built in `feat(ipc): add
- *   correlated consent request channels`), and suspends until a
- *   decision is resolved against `pendingDecisions` by that call's
- *   `toolCallId` — by the user, or as `declined` by abort cleanup
- *   (`feat(loop): implement graceful abort cleanup`).
+ *   surfaced the request (via correlated consent request channels), and
+ *   suspends until a decision is resolved against `pendingDecisions` by
+ *   that call's `toolCallId` — by the user, or as `declined` by abort cleanup.
  *
  * On resolution, the run transitions to `executing-tool` if accepted or
  * back to `streaming` if declined, matching the legal transitions

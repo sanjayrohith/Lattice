@@ -18,8 +18,7 @@ export interface MemoryHandlerOptions {
  * a full-reindex trigger. A full reindex always passes an empty prior
  * snapshot to {@link ReindexPipeline.runIncrementalPass}, so every
  * existing file is reprocessed regardless of whether it changed — the
- * incremental watcher (`feat(memory): reindex incrementally on
- * filesystem changes`) is what keeps the index cheap turn to turn; this
+ * incremental watcher is what keeps the index cheap turn to turn; this
  * is the explicit, user-initiated escape hatch.
  */
 export function registerMemoryHandlers(options: MemoryHandlerOptions): void {

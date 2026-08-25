@@ -4,8 +4,7 @@ export type CleanupAction = () => void;
  * Coordinates every cleanup action a run's components need performed the
  * moment that run is aborted: killing spawned child processes,
  * terminating the model stream (already handled by passing the same
- * `AbortSignal` into `streamText`/tool execution — see `feat(loop): wire
- * abort controller and cancel channel`), and resolving pending consent
+ * `AbortSignal` into `streamText`/tool execution), and resolving pending consent
  * requests as declined rather than leaving them hanging forever. Actions
  * run at most once, in registration order, and a later action throwing
  * never prevents an earlier or later one from running.

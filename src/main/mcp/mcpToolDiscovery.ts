@@ -120,9 +120,8 @@ export interface ToMcpAnyToolOptions {
  * `options.existingNames` via {@link resolveToolNameCollision}. The
  * input schema is derived from the tool's declared JSON Schema via
  * {@link jsonSchemaToZod} — real per-field validation and the
- * descriptions the model relies on for guidance, rather than the
- * permissive `z.record(z.unknown())` placeholder `feat(mcp): discover
- * tools at the start of every turn` used. `defaultConsent` is `'ask'`
+ * descriptions the model relies on for guidance, rather than a
+ * permissive `z.record(z.unknown())` fallback placeholder. `defaultConsent` is `'ask'`
  * unless the resolved name appears in `options.consentAllowlist`, in
  * which case it is `'always'` — an externally supplied tool is never
  * implicitly trusted the way a built-in filesystem tool is, except where

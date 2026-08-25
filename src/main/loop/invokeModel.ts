@@ -8,10 +8,9 @@ import type { AnyTool } from '../tools/types';
  * Converts the run's toolset into the AI SDK's `tools` record with no
  * `execute` bound to any entry. Omitting `execute` is deliberate: it
  * makes every tool a model-visible, SDK-described capability without
- * letting the SDK auto-run it. The loop (`feat(loop): intercept and
- * dispatch tool calls`) is what actually calls a tool's `execute`, after
- * routing the emitted call through the registry, argument validation,
- * and the consent gate.
+ * letting the SDK auto-run it. The loop is what actually calls a tool's
+ * `execute`, after routing the emitted call through the registry,
+ * argument validation, and the consent gate.
  */
 // See AnyTool: a heterogeneous collection of tools with differing Input
 // types cannot be given a single precise generic here.

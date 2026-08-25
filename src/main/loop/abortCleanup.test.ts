@@ -97,8 +97,7 @@ describe('AbortCleanupCoordinator', () => {
       );
 
       coordinator.onAbort(() => controller.abort());
-      // run_command already receives the same signal directly (per
-      // `feat(loop): wire abort controller and cancel channel`); aborting
+      // run_command already receives the same signal directly; aborting
       // here exercises the coordinator alongside that existing wiring.
       controller.abort();
 

@@ -29,8 +29,7 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMe
 /**
  * Runs `operation` bounded by `timeoutMs`; on either a timeout or any
  * thrown/rejected error, logs a warning naming `serverId` and returns
- * `fallback` instead of propagating — the mechanism behind `feat(mcp):
- * isolate server failures from the turn`. A hung, crashed, or
+ * `fallback` instead of propagating. A hung, crashed, or
  * malformed server degrades to "contributes nothing this turn" rather
  * than failing every other server's discovery or the agent turn itself.
  */

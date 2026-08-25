@@ -19,8 +19,8 @@ function withDescription(schema: z.ZodTypeAny, description: string | undefined):
  * Converts a JSON Schema object into an equivalent Zod schema, so an
  * MCP tool declared with `{ type: 'object', properties: {...} }` gets
  * real per-field validation and the descriptions the model relies on for
- * guidance, instead of the permissive `z.record(z.unknown())` placeholder
- * `feat(mcp): discover tools at the start of every turn` used. Recognizes
+ * guidance, instead of a permissive `z.record(z.unknown())` fallback
+ * placeholder. Recognizes
  * `object`, `array`, `string`, `number`/`integer`, `boolean`, and `enum`;
  * anything unrecognized (a schema-less tool, an unsupported keyword
  * combination, `type` omitted) falls back to `z.unknown()` rather than

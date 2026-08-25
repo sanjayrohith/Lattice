@@ -4,8 +4,8 @@ import type { Migration } from '../database';
  * Aggregated per-tool, per-file-type outcome counts — one row per
  * `(tool_name, file_extension)` pair, incremented in place rather than
  * appending an unbounded event log, since only the running success rate
- * is ever queried. Backs `feat(telemetry): record tool outcomes and
- * route on success rate`'s edit-strategy bias.
+ * is ever queried. Backs the edit-strategy routing bias based on tool
+ * success rates.
  */
 export const toolOutcomesMigration: Migration = {
   version: 7,

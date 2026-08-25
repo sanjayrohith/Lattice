@@ -16,9 +16,8 @@ export function configVersionOf(config: unknown): string {
 /**
  * Caches each server's most recently discovered tool list for
  * `ttlMs`, keyed by server id and fingerprinted against its current
- * config — so per-turn discovery (`feat(mcp): discover tools at the
- * start of every turn`) hits the network only once per TTL window per
- * server instead of every single turn. A cached entry is invalidated
+ * config — so per-turn discovery hits the network only once per TTL
+ * window per server instead of every single turn. A cached entry is invalidated
  * automatically the instant its server's config changes (the
  * fingerprint no longer matches), and can be invalidated explicitly —
  * on a supervised restart, or a user-triggered "refresh" action — via

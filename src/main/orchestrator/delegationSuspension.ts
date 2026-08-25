@@ -48,8 +48,7 @@ export function partitionDelegationCall(calls: readonly ToolCallRequest[]): Part
  * requesting further deltas from the primary model stream without
  * ending the run. The loop resumes by transitioning back to
  * `streaming` once the subordinate agent's result has been captured
- * and reinjected (`feat(orchestrator): reinject result and resume
- * primary agent`).
+ * and reinjected.
  */
 export function suspendPrimaryForDelegation(stateMachine: AgentRunStateMachine): void {
   stateMachine.transition('delegating');

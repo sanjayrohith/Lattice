@@ -10,8 +10,7 @@ function isFailureResult(result: unknown): boolean {
  * Tracks every in-flight tool call for `activeRunId` as a live preview,
  * driven entirely by `run:stream` events: `partial-tool-args` updates
  * the preview's argument object as the model's tool-call JSON is
- * progressively repaired and re-parsed (see `feat(stream): repair
- * partial tool argument json`), and `tool-result` finalizes it as
+ * progressively repaired and re-parsed, and `tool-result` finalizes it as
  * succeeded or failed. Previews are kept, not removed, once finished —
  * so the user can see what just ran, not just what is about to.
  */

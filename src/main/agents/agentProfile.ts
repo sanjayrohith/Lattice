@@ -6,8 +6,7 @@ import { modelConfigSchema } from '../ai/modelConfig';
  * (`sdk`, using {@link modelConfigSchema}), or a peer reachable over the
  * Agent Client Protocol (`acp`, identified by the connector id it
  * should be opened through). The orchestrator's `AgentBackend`
- * abstraction (`feat(orchestrator): unify sdk and acp behind agent
- * backend interface`) is what lets a profile with either backend be
+ * abstraction is what lets a profile with either backend be
  * run identically by the rest of the loop.
  */
 export const agentBackendRefSchema = z.discriminatedUnion('kind', [

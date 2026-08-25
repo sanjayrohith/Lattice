@@ -23,8 +23,7 @@ export function repairPartialJson(partial: string): unknown | undefined {
  * Accumulates a tool call's `tool-input-delta` chunks as they stream in
  * and re-derives a best-effort, progressively more complete parsed
  * object on every chunk — the partial argument preview the UI renders
- * live (`feat(ui): render live tool call previews`) before the call is
- * complete enough to actually dispatch.
+ * live before the call is complete enough to actually dispatch.
  */
 export class PartialToolArgsTracker {
   private buffer = '';

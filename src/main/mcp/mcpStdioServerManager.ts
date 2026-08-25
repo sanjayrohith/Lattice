@@ -19,8 +19,8 @@ function defaultTransport(config: McpStdioServerConfig): Transport {
  * Manages the process lifecycle of every configured stdio MCP server:
  * spawns each one behind an {@link McpClient}, tracks health and
  * restarts a crashed process with capped exponential backoff via
- * {@link ConnectorSupervisor} — the exact mechanism ACP connectors use
- * (`feat(acp): supervise connector processes`) — and offers a single
+ * {@link ConnectorSupervisor} — the exact mechanism ACP connectors use —
+ * and offers a single
  * `shutdownAll` for a clean exit on app quit.
  */
 export class McpStdioServerManager {

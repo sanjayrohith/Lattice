@@ -6,8 +6,7 @@ export const DELEGATE_TO_AGENT_TOOL_NAME = 'delegate_to_agent';
 /**
  * Builds the `delegate_to_agent` tool bound to the current roster:
  * calling it hands the task off to `onDelegate`, which the orchestrator
- * wires to the actual suspend/spawn/reinject machinery
- * (`feat(orchestrator): suspend primary stream on delegation` onward).
+ * wires to the actual suspend/spawn/reinject machinery.
  * This module only owns the tool's shape and its schema's dependency on
  * the live agent id list — not what delegating actually does.
  */
